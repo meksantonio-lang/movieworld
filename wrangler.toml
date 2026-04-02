@@ -1,0 +1,24 @@
+name = "mediahub"
+compatibility_date = "2026-03-15"
+
+[build]
+command = "npm run build"
+cwd = "./mediahub"
+
+pages_build_output_dir = "out"
+
+[[d1_databases]]
+binding = "MOVIEDB"
+database_name = "movieworld_db"
+database_id = "ca2d92bc-8c59-48ec-9d72-1561e4627cdf"
+
+[env.preview]
+compatibility_flags = ["nodejs_compat"]
+
+[env.production]
+compatibility_flags = ["nodejs_compat"]
+
+[[env.production.d1_databases]]
+binding = "MOVIEDB"
+database_name = "movieworld_db"
+database_id = "ca2d92bc-8c59-48ec-9d72-1561e4627cdf"
