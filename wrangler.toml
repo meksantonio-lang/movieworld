@@ -1,20 +1,23 @@
-name = "mediahub"
-compatibility_date = "2026-03-15"
+name = "movieworld"
+compatibility_date = "2026-04-02"
 
+# Build settings for Cloudflare Pages
 [build]
 command = "npm run build"
-cwd = "./mediahub"
+cwd = "./movieworld"
+pages_build_output_dir = ".next"
 
-pages_build_output_dir = "out"
-
+# Database binding
 [[d1_databases]]
 binding = "MOVIEDB"
 database_name = "movieworld_db"
 database_id = "ca2d92bc-8c59-48ec-9d72-1561e4627cdf"
 
+# Preview environment
 [env.preview]
 compatibility_flags = ["nodejs_compat"]
 
+# Production environment
 [env.production]
 compatibility_flags = ["nodejs_compat"]
 
