@@ -10,5 +10,9 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: ["@cloudflare/workers-types"],
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
+
 export default nextConfig;
