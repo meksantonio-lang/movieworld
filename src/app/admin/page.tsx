@@ -52,10 +52,17 @@ export default function AdminPage() {
     );
   }
 
+  // Non-admin users → Access Denied + Logout
   if (session.user.email !== ADMIN_EMAIL) {
-    return <h1>Access Denied</h1>;
+    return (
+      <div>
+        <h1>Access Denied</h1>
+        <button onClick={() => supabase.auth.signOut()}>Logout</button>
+      </div>
+    );
   }
 
+  // Admin user → Full dashboard
   async function addMovie() {
     const res = await fetch("/api/movies", {
       method: "POST",
