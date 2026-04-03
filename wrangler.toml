@@ -1,9 +1,9 @@
 name = "movieworld"
-compatibility_date = "2026-04-02"
+compatibility_date = "2026-04-03"
 compatibility_flags = ["nodejs_compat"]
 
-# Tell Cloudflare Pages where Next.js outputs its build
-pages_build_output_dir = ".next"
+# OpenNext build output directory
+pages_build_output_dir = ".open-next"
 
 # Database binding
 [[d1_databases]]
