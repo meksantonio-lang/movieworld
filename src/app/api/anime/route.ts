@@ -3,11 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "edge";
 
-interface Music {
+interface Anime {
   id: number;
   title: string;
-  artist: string;
-  album: string;
   genre: string;
   cover: string | null;
   release_year: number | null;
@@ -23,12 +21,12 @@ const supabase = createClient(
 export async function GET() {
   try {
     const { data, error } = await supabase
-      .from("music")
-      .select("id, title, artist, album, genre, cover, release_year, created_at, downloads")
+      .from("anime")
+      .select("id, title, genre, cover, release_year, created_at, downloads")
       .order("id", { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ result: data as Music[] }, { status: 200 });
+    return NextResponse.json({ result: data as Anime[] }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
@@ -37,15 +35,15 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, artist, album, genre, cover, release_year, download_url } = body;
+    const { title, genre, cover, release_year, download_url } = body;
 
     const { data, error } = await supabase
-      .from("music")
-      .insert([{ title, artist, album, genre, cover, release_year, download_url, created_at: new Date().toISOString(), downloads: 0, source_table: "music" }])
+      .from("anime")
+      .insert([{ title, genre, cover, release_year, download_url, created_at: new Date().toISOString(), downloads: 0, source_table: "anime", }])
       .select();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ result: data as Music[] }, { status: 201 });
+    return NextResponse.json({ result: data as Anime[] }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
@@ -57,7 +55,7 @@ export async function PUT(request: Request) {
     const { id, downloads } = body;
 
     const { data, error } = await supabase
-      .from("music")
+      .from("anime")
       .update({ downloads: downloads + 1 })
       .eq("id", id)
       .select();
