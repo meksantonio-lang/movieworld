@@ -5,6 +5,8 @@ export interface MediaItemRow {
   category: string;
   download_link: string;
   created_at: string;
+  title?: string;
+  release_date?: string;
 }
 
 // TMDB Movie response
@@ -14,6 +16,7 @@ export interface TMDBMovie {
   release_date: string;
   poster_path: string;
   overview?: string;
+  imdb_id?: string | null; // <-- added: optional IMDb id from TMDB
 }
 
 // TMDB TV Show response (anime, kdrama, etc.)
@@ -23,4 +26,5 @@ export interface TMDBTvShow {
   first_air_date: string;
   poster_path: string;
   overview?: string;
+  imdb_id?: string | null; // optional here too if you may use it for TV shows
 }
