@@ -7,6 +7,9 @@ export interface MediaItemRow {
   created_at: string;
   title?: string;
   release_date?: string;
+  first_air_date?: string;
+  poster_path?: string;
+  name?: string; // for TV shows
 }
 
 // TMDB Movie response
@@ -17,6 +20,7 @@ export interface TMDBMovie {
   poster_path: string;
   overview?: string;
   imdb_id?: string | null; // <-- added: optional IMDb id from TMDB
+  first_air_date?: string;
 }
 
 // TMDB TV Show response (anime, kdrama, etc.)
