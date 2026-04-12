@@ -141,60 +141,78 @@ export default function AdminPage() {
     }
   }
 
-  // submit handler
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
+  // replace existing handleSubmit with this
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  setError(null);
 
-    const payload: any = {
-      title,
-      genre,
-      cover,
-      release_year: typeof releaseYear === "number" && !Number.isNaN(releaseYear) ? releaseYear : null,
-      download_url: downloadUrl,
-      tmdb_id: tmdbId ?? null,
+  // Build the media_items payload
+  const mediaPayload: any = {
+    title: title || null,
+    tmdb_id: tmdbId ?? null,
+    category: activeTab, // movies, anime, kdrama, music, books
+    download_link: downloadUrl || null,
+    cover_url: cover || null,
+    genre: genre || null, // comma separated names
+    release_year: typeof releaseYear === "number" && !Number.isNaN(releaseYear) ? releaseYear : null,
+    metadata: null, // optional: full TMDB details if you fetched them
+  };
+
+  // If you fetched details earlier and want to persist them:
+  // const details = await fetchTmdbDetails(tmdbId, tmdbCategory === "tv" ? "tv" : "movie");
+  // mediaPayload.metadata = details ?? null;
+
+  // Optional: include music/book specific fields inside metadata or separate columns
+  if (activeTab === "music") {
+    mediaPayload.metadata = {
+      ...(mediaPayload.metadata || {}),
+      artist,
+      album,
     };
-    if (activeTab === "music") {
-      payload.artist = artist;
-      payload.album = album;
-    }
-    if (activeTab === "books") {
-      payload.author = author;
+  }
+  if (activeTab === "books") {
+    mediaPayload.metadata = {
+      ...(mediaPayload.metadata || {}),
+      author,
+    };
+  }
+
+  try {
+    // Insert into media_items table directly
+    const { data, error: insertErr } = await supabase
+      .from("media_items")
+      .insert([mediaPayload])
+      .select()
+      .single();
+
+    if (insertErr) {
+      console.error("Insert media_items error:", insertErr);
+      setError(insertErr.message || "Insert failed");
+      return;
     }
 
-    try {
-      console.log("Posting to", `/api/${activeTab}`, "payload:", payload);
-      const res = await fetch(`/api/${activeTab}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const text = await res.text();
-      console.log("Response status:", res.status, "body:", text);
-      if (!res.ok) {
-        try {
-          const json = JSON.parse(text);
-          setError(json.message || JSON.stringify(json));
-        } catch {
-          setError(`Request failed: ${res.status} ${text}`);
-        }
-        return;
-      }
-      alert(`${activeTab} added successfully`);
-      setTitle(""); setGenre(""); setCover(""); setReleaseYear(""); setDownloadUrl("");
-      setArtist(""); setAlbum(""); setAuthor("");
-      setTmdbId(null);
-      setTmdbMatches(null);
-      setTmdbError(null);
-      setTmdbCategory(null);
-      // refresh list
-      const { data } = await supabase.from(activeTab).select("*").order("created_at", { ascending: false }).limit(100);
-      setItems(data ?? []);
-    } catch (err: any) {
-      console.error("Submit error:", err);
-      setError(err.message || "Unknown error");
-    }
+    alert(`${activeTab} added to media_items successfully`);
+    // clear form
+    setTitle(""); setGenre(""); setCover(""); setReleaseYear(""); setDownloadUrl("");
+    setArtist(""); setAlbum(""); setAuthor("");
+    setTmdbId(null);
+    setTmdbMatches(null);
+    setTmdbError(null);
+    setTmdbCategory(null);
+
+    // refresh list (if your frontend reads from media_items)
+    const { data: refreshed } = await supabase
+      .from("media_items")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    setItems(refreshed ?? []);
+  } catch (err: any) {
+    console.error("Submit error:", err);
+    setError(err.message || "Unknown error");
   }
+}
+
 
   const buttonStyle: React.CSSProperties = {
     background: "#0070f3",
