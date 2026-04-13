@@ -1,6 +1,7 @@
 // src/app/anime/page.tsx
 export const dynamic = "force-dynamic";
 
+import React from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import MediaCard from "@/components/MediaCard";
@@ -34,7 +35,6 @@ async function enrichAnime(rows: MediaItemRow[]) {
     rows.map(async (r) => {
       const dbDownload = r.download_link ?? null;
 
-      // Skip TMDB lookup when tmdb_id is falsy or 0
       if (!r.tmdb_id || Number(r.tmdb_id) === 0) {
         return {
           title: r.title ?? r.name ?? `Show ${r.id}`,
@@ -76,8 +76,17 @@ async function enrichAnime(rows: MediaItemRow[]) {
   );
 }
 
-export default async function AnimePage({ searchParams }: { searchParams?: { page?: string } }) {
-  const page = Math.max(1, Number(searchParams?.page ?? "1"));
+// --- Necessary edit: accept props as any to avoid PageProps collision in .next/types ---
+export default async function Page(props: any): Promise<React.ReactNode> {
+  const searchParams = (props && props.searchParams) as
+    | Record<string, string | string[] | undefined>
+    | undefined;
+
+  const page = Math.max(
+    1,
+    Number(Array.isArray(searchParams?.page) ? searchParams?.page[0] : searchParams?.page ?? "1")
+  );
+
   const { rows } = await fetchAnimeRows(page);
   const anime = await enrichAnime(rows);
 
@@ -98,9 +107,13 @@ export default async function AnimePage({ searchParams }: { searchParams?: { pag
         <>
           <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {anime.map((m) => {
-              const key = m.id ?? (m as any).imdb_id ?? (m as any).name ?? (m as any).title ?? Math.random().toString(36).slice(2, 9);
+              const key =
+                m.id ??
+                (m as any).imdb_id ??
+                (m as any).name ??
+                (m as any).title ??
+                Math.random().toString(36).slice(2, 9);
 
-              // Guard: TV shows use name/first_air_date, movies use title/release_date
               const title = (m as TMDBTvShow).name ?? (m as TMDBMovie).title ?? `Untitled (${m.id ?? "?"})`;
               const year =
                 (m as TMDBTvShow).first_air_date
@@ -113,7 +126,7 @@ export default async function AnimePage({ searchParams }: { searchParams?: { pag
 
               return (
                 <MediaCard
-                  key={key}
+                  key={String(key)}
                   title={title}
                   category={year}
                   image={image}
