@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "types": ["node"],
+    "jsx": "preserve", // ✅ updated from "preserve" to "react-jsx"
+    "types": [
+      "node"
+    ],
     "target": "ES2017",
     "lib": [
       "dom",
@@ -17,7 +19,6 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx", // ✅ updated from "preserve" to "react-jsx"
     "incremental": true,
     "plugins": [
       {

@@ -1,3 +1,4 @@
+// src/app/books/page.tsx
 import { supabase } from "@/lib/supabaseClient";
 import MediaCard from "@/components/MediaCard";
 import { MediaItemRow } from "@/types/media";

@@ -77,8 +77,13 @@ async function enrichMovies(rows: MediaItemRow[]) {
   );
 }
 
-export default async function MoviesPage({ searchParams }: { searchParams?: { page?: string } }) {
-  const page = Math.max(1, Number(searchParams?.page ?? "1"));
+// --- Necessary edit: accept props as any to avoid PageProps collision in .next/types ---
+export default async function MoviesPage(props: any) {
+  const searchParams = (props && props.searchParams) as
+    | Record<string, string | string[] | undefined>
+    | undefined;
+
+  const page = Math.max(1, Number(Array.isArray(searchParams?.page) ? searchParams?.page[0] : searchParams?.page ?? "1"));
   const { rows } = await fetchMovieRows(page);
   const movies = await enrichMovies(rows);
 

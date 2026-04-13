@@ -76,8 +76,12 @@ async function enrichKdrama(rows: MediaItemRow[]) {
   );
 }
 
-export default async function KdramaPage({ searchParams }: { searchParams?: { page?: string } }) {
-  const page = Math.max(1, Number(searchParams?.page ?? "1"));
+export default async function KdramaPage(props: any) {
+  const searchParams = (props && props.searchParams) as
+    | Record<string, string | string[] | undefined>
+    | undefined;
+
+  const page = Math.max(1, Number(Array.isArray(searchParams?.page) ? searchParams?.page[0] : searchParams?.page ?? "1"));
   const { rows } = await fetchKdramaRows(page);
   const kdrama = await enrichKdrama(rows);
 

@@ -42,8 +42,13 @@ function mapMusic(rows: MediaItemRow[]): EnrichedSong[] {
   }));
 }
 
-export default async function MusicPage({ searchParams }: { searchParams?: { page?: string } }) {
-  const page = Math.max(1, Number(searchParams?.page ?? "1"));
+// --- Necessary edit: accept props as any to avoid PageProps collision in .next/types ---
+export default async function MusicPage(props: any) {
+  const searchParams = (props && props.searchParams) as
+    | Record<string, string | string[] | undefined>
+    | undefined;
+
+  const page = Math.max(1, Number(Array.isArray(searchParams?.page) ? searchParams?.page[0] : searchParams?.page ?? "1"));
   const { rows } = await fetchMusicRows(page);
   const songs = mapMusic(rows);
 
