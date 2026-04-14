@@ -9,7 +9,7 @@ import { MediaItemRow } from "@/types/media";
 type EnrichedSong = {
   id?: number | string;
   title?: string;
-  poster_path?: string;
+  poster_path?: string; // now expected to be a Supabase Storage public URL
   release_date?: string;
   download_link?: string | null;
 };
@@ -21,7 +21,7 @@ async function fetchMusicRows(page = 1) {
   const { data, error } = await supabase
     .from("media_items")
     .select("*")
-    .eq("category", "songs") // category is 'songs' in your DB
+    .eq("category", "songs")
     .order("created_at", { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1);
 
@@ -36,19 +36,26 @@ function mapMusic(rows: MediaItemRow[]): EnrichedSong[] {
   return rows.map((r) => ({
     id: r.id,
     title: r.title ?? `Song ${r.id}`,
-    poster_path: r.poster_path ?? "",
+    poster_path: r.poster_path ?? "", // Supabase Storage URL saved in DB
     release_date: r.release_date ?? "",
     download_link: r.download_link ?? "",
   }));
 }
 
-// --- Necessary edit: accept props as any to avoid PageProps collision in .next/types ---
+// --- Necessary edit: accept props as any to avoid PageProps collision ---
 export default async function MusicPage(props: any) {
   const searchParams = (props && props.searchParams) as
     | Record<string, string | string[] | undefined>
     | undefined;
 
-  const page = Math.max(1, Number(Array.isArray(searchParams?.page) ? searchParams?.page[0] : searchParams?.page ?? "1"));
+  const page = Math.max(
+    1,
+    Number(
+      Array.isArray(searchParams?.page)
+        ? searchParams?.page[0]
+        : searchParams?.page ?? "1"
+    )
+  );
   const { rows } = await fetchMusicRows(page);
   const songs = mapMusic(rows);
 
@@ -60,7 +67,9 @@ export default async function MusicPage(props: any) {
     <main className="px-6 py-10">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-purple-700">All Music</h1>
-        <Link href="/" className="text-sm text-gray-600 hover:underline">← Back to Home</Link>
+        <Link href="/" className="text-sm text-gray-600 hover:underline">
+          ← Back to Home
+        </Link>
       </div>
 
       {songs.length === 0 ? (
@@ -71,8 +80,11 @@ export default async function MusicPage(props: any) {
             {songs.map((s) => {
               const key = s.id ?? Math.random().toString(36).slice(2, 9);
               const title = s.title ?? `Untitled (${s.id ?? "?"})`;
-              const year = s.release_date ? String(s.release_date).slice(0, 4) : "";
-              const image = s.poster_path ? s.poster_path : "/placeholder-poster.png";
+              const year = s.release_date
+                ? String(s.release_date).slice(0, 4)
+                : "";
+              // Use Supabase Storage URL directly
+              const image = s.poster_path || "/placeholder-poster.png";
 
               return (
                 <MediaCard
