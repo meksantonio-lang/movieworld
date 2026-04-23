@@ -8,7 +8,7 @@ import { MediaItemRow, TMDBMovie, TMDBTvShow } from "@/types/media";
 
 type EnrichedItem = (TMDBMovie | TMDBTvShow) & {
   download_link?: string | null;
-  id?: number | string;
+  id: number | string;
 };
 
 const PAGE_SIZE = 24;
@@ -34,7 +34,6 @@ async function enrichKdrama(rows: MediaItemRow[]) {
     rows.map(async (r) => {
       const dbDownload = r.download_link ?? null;
 
-      // Skip TMDB lookup when tmdb_id is falsy or 0
       if (!r.tmdb_id || Number(r.tmdb_id) === 0) {
         return {
           title: r.title ?? r.name ?? `Show ${r.id}`,
@@ -76,12 +75,14 @@ async function enrichKdrama(rows: MediaItemRow[]) {
   );
 }
 
-export default async function KdramaPage(props: any) {
-  const searchParams = (props && props.searchParams) as
-    | Record<string, string | string[] | undefined>
-    | undefined;
+export default async function KdramaPage({ searchParams }: { searchParams: Promise<Record<string, string | string[]>> }) {
+  const params = await searchParams; // ✅ await first
 
-  const page = Math.max(1, Number(Array.isArray(searchParams?.page) ? searchParams?.page[0] : searchParams?.page ?? "1"));
+  const page = Math.max(
+    1,
+    Number(Array.isArray(params?.page) ? params.page[0] : params.page ?? "1")
+  );
+
   const { rows } = await fetchKdramaRows(page);
   const kdrama = await enrichKdrama(rows);
 
@@ -93,7 +94,9 @@ export default async function KdramaPage(props: any) {
     <main className="px-6 py-10">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-purple-700">All Kdrama</h1>
-        <Link href="/" className="text-sm text-gray-600 hover:underline">← Back to Home</Link>
+        <Link href="/" className="text-sm text-gray-600 hover:underline">
+          ← Back to Home
+        </Link>
       </div>
 
       {kdrama.length === 0 ? (
@@ -101,30 +104,27 @@ export default async function KdramaPage(props: any) {
       ) : (
         <>
           <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {kdrama.map((m) => {
-              const key = m.id ?? (m as any).imdb_id ?? (m as any).name ?? (m as any).title ?? Math.random().toString(36).slice(2, 9);
-
-              // Guard: TV shows use name/first_air_date, movies use title/release_date
-              const title = (m as TMDBTvShow).name ?? (m as TMDBMovie).title ?? `Untitled (${m.id ?? "?"})`;
-              const year =
-                (m as TMDBTvShow).first_air_date
-                  ? String((m as TMDBTvShow).first_air_date).slice(0, 4)
-                  : (m as TMDBMovie).release_date
-                  ? String((m as TMDBMovie).release_date).slice(0, 4)
-                  : "";
-
-              const image = m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : "/placeholder-poster.png";
-
-              return (
-                <MediaCard
-                  key={key}
-                  title={title}
-                  category={year}
-                  image={image}
-                  downloadLink={m.download_link ?? ""}
-                />
-              );
-            })}
+            {kdrama.map((m) => (
+              <MediaCard
+                key={String(m.id)}
+                id={m.id} // ✅ required prop
+                title={(m as TMDBTvShow).name ?? (m as TMDBMovie).title ?? `Untitled (${m.id})`}
+                category="kdrama" // ✅ keep category consistent
+                image={
+                  m.poster_path
+                    ? `https://image.tmdb.org/t/p/w500${m.poster_path}`
+                    : "/placeholder-poster.png"
+                }
+                downloadLink={m.download_link ?? ""}
+                releaseYear={
+                  (m as TMDBTvShow).first_air_date
+                    ? (m as TMDBTvShow).first_air_date.slice(0, 4)
+                    : (m as TMDBMovie).release_date
+                    ? (m as TMDBMovie).release_date.slice(0, 4)
+                    : ""
+                }
+              />
+            ))}
           </div>
 
           <div className="mt-8 flex items-center justify-between">

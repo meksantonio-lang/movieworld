@@ -5,6 +5,9 @@ import React, { useEffect, useState } from "react";
 import { createClient, Session } from "@supabase/supabase-js";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { saveMovieDetails } from "@/lib/mediaService";
+
+
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -20,6 +23,31 @@ export default function AdminPage() {
   // -------------------------
   const [session, setSession] = useState<Session | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("movies");
+  const [bookMatches, setBookMatches] = useState<any[] | null>(null);
+
+// Add new states for TMDB ID save functionality
+  const [movieId, setMovieId] = useState("");
+  const [tmdbResponse, setTmdbResponse] = useState<any>(null);
+
+// ...existing code...
+  // Add new handleSave function
+  async function handleSave() {
+    if (!movieId) {
+      alert("Enter a Movie ID");
+      return;
+    }
+    // Fetch TMDB details first (assuming movie for simplicity, adjust if needed)
+    const details = await fetchTmdbDetails(movieId, "movie");
+    if (!details) {
+      alert("Failed to fetch TMDB details");
+      return;
+    }
+    setTmdbResponse(details);
+    await saveMovieDetails(movieId, details);
+    alert("Details saved!");
+    setMovieId("");
+    setTmdbResponse(null);
+  }
 
   // shared form state
   const [title, setTitle] = useState("");
@@ -140,6 +168,40 @@ export default function AdminPage() {
       return null;
     }
   }
+
+// CLIENT: proxy-based MusicBrainz search (calls server route /api/autofill-music)
+async function fetchFromMusicBrainz(artist: string, track: string) {
+  try {
+    const resp = await fetch("/api/autofill-music", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ artist, track }),
+    });
+    if (!resp.ok) {
+      console.warn("MusicBrainz proxy non-ok:", resp.status, await resp.text());
+      return null;
+    }
+    return await resp.json();
+  } catch (err) {
+    console.error("fetchFromMusicBrainz proxy error:", err);
+    return null;
+  }
+}
+
+async function fetchFromOpenLibrary(title: string, author?: string) {
+  try {
+    const resp = await fetch("/api/autofill-book", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, author }),
+    });
+    if (!resp.ok) return null;
+    return await resp.json();
+  } catch {
+    return null;
+  }
+}
+
 
   // replace existing handleSubmit with this
 async function handleSubmit(e: React.FormEvent) {
@@ -364,6 +426,102 @@ async function handleSubmit(e: React.FormEvent) {
             >
               Autofill (TMDB)
             </button>
+            {activeTab === "music" && (
+  <button
+    type="button"
+    onClick={async () => {
+      if (!title || !artist) {
+        alert("Enter both artist and track title to autofill from TheAudioDB");
+        return;
+      }
+      const data = await fetchFromMusicBrainz(artist, title);
+      if (!data) {
+        alert("No result from MusicBrainz");
+        return;
+      }
+      setTitle(data.title || title);
+      setGenre(data.genre || "");
+      setCover(data.coverUrl || "");
+      setReleaseYear(data.releaseYear || "");
+      setArtist(data.artist || artist);
+      setAlbum(data.album || "");
+    }}
+    style={buttonStyle}
+  >
+    Autofill (MusicBrainz)
+  </button>
+)}
+
+{activeTab === "books" && (
+  <>
+    <button
+      type="button"
+      onClick={async () => {
+        if (!title) {
+          alert("Enter a book title");
+          return;
+        }
+        const data = await fetchFromOpenLibrary(title, author);
+        if (!data || !data.results) {
+          alert("No result from OpenLibrary");
+          return;
+        }
+
+        if (data.results.length === 1) {
+          const b = data.results[0];
+          setTitle(b.title);
+          setAuthor(b.author);
+          setReleaseYear(b.publishYear || "");
+          setCover(b.coverUrl || "");
+          setDownloadUrl(b.downloadUrl || "");
+        } else {
+          setBookMatches(data.results); // show multiple matches
+        }
+      }}
+      style={buttonStyle}
+    >
+      Autofill (OpenLibrary)
+    </button>
+
+    {bookMatches && (
+      <div style={{ marginTop: 20 }}>
+        <h3>OpenLibrary Matches</h3>
+        <ul>
+          {bookMatches.map((match, idx) => (
+            <li key={idx} style={{ marginBottom: 10 }}>
+              <strong>{match.title}</strong> by {match.author} ({match.publishYear})
+              <br />
+              {match.coverUrl && (
+                <img
+                  src={match.coverUrl}
+                  alt={match.title}
+                  style={{ width: 100, marginTop: 5 }}
+                />
+              )}
+              <br />
+              <button
+                onClick={() => {
+                  setTitle(match.title);
+                  setAuthor(match.author);
+                  setReleaseYear(match.publishYear || "");
+                  setCover(match.coverUrl || "");
+                  setDownloadUrl(match.downloadUrl || "");
+                  setBookMatches(null); // clear after selection
+                }}
+                style={buttonStyle}
+              >
+                Use this
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+  </>
+)}
+
+
+
           </div>
         </form>
 
@@ -416,6 +574,26 @@ async function handleSubmit(e: React.FormEvent) {
         )}
 
         {error && <p style={{ color: "red" }}>Error: {error}</p>}
+      </section>
+
+{/* Add new section for saving by TMDB ID */}
+      <section style={{ marginBottom: 24 }}>
+        <h2>Save by TMDB ID</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 520 }}>
+          <input
+            type="text"
+            placeholder="Movie ID"
+            value={movieId}
+            onChange={(e) => setMovieId(e.target.value)}
+            style={{ padding: "8px", border: "1px solid #ccc", borderRadius: 4 }}
+          />
+          <button
+            onClick={handleSave}
+            style={buttonStyle}
+          >
+            Save TMDB Details
+          </button>
+        </div>
       </section>
 
       <section>

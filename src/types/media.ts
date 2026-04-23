@@ -7,9 +7,15 @@ export interface MediaItemRow {
   created_at: string;
   title?: string;
   release_date?: string;
+  release_year?: string | number | null;
   first_air_date?: string;
   poster_path?: string;
   name?: string; // for TV shows
+  cover?: string; // OpenLibrary cover URL for books
+  author?: string; // ✅ for books
+  artist?: string; // ✅ for music
+  poster_thumb?: string | null; // optional thumbnail field
+  details?: Record<string, any>; // for storing additional metadata as JSON
 }
 
 // TMDB Movie response
@@ -19,8 +25,13 @@ export interface TMDBMovie {
   release_date: string;
   poster_path: string;
   overview?: string;
-  imdb_id?: string | null; // <-- added: optional IMDb id from TMDB
+  imdb_id?: string | null; // optional IMDb id from TMDB
   first_air_date?: string;
+  category?: string;
+  details?: {
+    artist?: string;
+    author?: string;
+  };
 }
 
 // TMDB TV Show response (anime, kdrama, etc.)
@@ -30,5 +41,10 @@ export interface TMDBTvShow {
   first_air_date: string;
   poster_path: string;
   overview?: string;
-  imdb_id?: string | null; // optional here too if you may use it for TV shows
+  imdb_id?: string | null; // optional IMDb id from TMDB
+  category?: string;
+  details?: {
+    artist?: string;
+    author?: string;
+  };
 }

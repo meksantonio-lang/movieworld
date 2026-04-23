@@ -9,7 +9,7 @@ import { MediaItemRow, TMDBMovie, TMDBTvShow } from "@/types/media";
 
 type EnrichedItem = (TMDBMovie | TMDBTvShow) & {
   download_link?: string | null;
-  id?: number | string;
+  id: number | string;
 };
 
 const PAGE_SIZE = 24;
@@ -76,15 +76,12 @@ async function enrichAnime(rows: MediaItemRow[]) {
   );
 }
 
-// --- Necessary edit: accept props as any to avoid PageProps collision in .next/types ---
-export default async function Page(props: any): Promise<React.ReactNode> {
-  const searchParams = (props && props.searchParams) as
-    | Record<string, string | string[] | undefined>
-    | undefined;
+export default async function AnimePage({ searchParams }: { searchParams: Promise<Record<string, string | string[]>> }) {
+  const params = await searchParams; // ✅ await first
 
   const page = Math.max(
     1,
-    Number(Array.isArray(searchParams?.page) ? searchParams?.page[0] : searchParams?.page ?? "1")
+    Number(Array.isArray(params?.page) ? params.page[0] : params.page ?? "1")
   );
 
   const { rows } = await fetchAnimeRows(page);
@@ -98,7 +95,9 @@ export default async function Page(props: any): Promise<React.ReactNode> {
     <main className="px-6 py-10">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-purple-700">All Anime</h1>
-        <Link href="/" className="text-sm text-gray-600 hover:underline">← Back to Home</Link>
+        <Link href="/" className="text-sm text-gray-600 hover:underline">
+          ← Back to Home
+        </Link>
       </div>
 
       {anime.length === 0 ? (
@@ -106,34 +105,27 @@ export default async function Page(props: any): Promise<React.ReactNode> {
       ) : (
         <>
           <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {anime.map((m) => {
-              const key =
-                m.id ??
-                (m as any).imdb_id ??
-                (m as any).name ??
-                (m as any).title ??
-                Math.random().toString(36).slice(2, 9);
-
-              const title = (m as TMDBTvShow).name ?? (m as TMDBMovie).title ?? `Untitled (${m.id ?? "?"})`;
-              const year =
-                (m as TMDBTvShow).first_air_date
-                  ? String((m as TMDBTvShow).first_air_date).slice(0, 4)
-                  : (m as TMDBMovie).release_date
-                  ? String((m as TMDBMovie).release_date).slice(0, 4)
-                  : "";
-
-              const image = m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : "/placeholder-poster.png";
-
-              return (
-                <MediaCard
-                  key={String(key)}
-                  title={title}
-                  category={year}
-                  image={image}
-                  downloadLink={m.download_link ?? ""}
-                />
-              );
-            })}
+            {anime.map((m) => (
+              <MediaCard
+                key={String(m.id)}
+                id={m.id} // ✅ required prop
+                title={(m as TMDBTvShow).name ?? (m as TMDBMovie).title ?? `Untitled (${m.id})`}
+                category="anime" // ✅ keep category consistent
+                image={
+                  m.poster_path
+                    ? `https://image.tmdb.org/t/p/w500${m.poster_path}`
+                    : "/placeholder-poster.png"
+                }
+                downloadLink={m.download_link ?? ""}
+                releaseYear={
+                  (m as TMDBTvShow).first_air_date
+                    ? (m as TMDBTvShow).first_air_date.slice(0, 4)
+                    : (m as TMDBMovie).release_date
+                    ? (m as TMDBMovie).release_date.slice(0, 4)
+                    : ""
+                }
+              />
+            ))}
           </div>
 
           <div className="mt-8 flex items-center justify-between">

@@ -1,4 +1,5 @@
 // src/app/adult/page.tsx
+import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import MediaCard from "@/components/MediaCard";
 import { MediaItemRow } from "@/types/media";
@@ -16,9 +17,11 @@ export default async function AdultPage() {
 
   const enriched = (adult as MediaItemRow[]).map((m) => ({
     id: m.id,
-    title: "Adult Content",
-    poster_path: "/placeholder.jpg",
-    download_link: m.download_link,
+    title: m.title || "Adult Content",
+    poster_path: m.cover || "/placeholder.jpg",
+    download_link: m.download_link ?? "",
+    author: m.author ?? "",
+    release_year: m.release_year ? String(m.release_year) : "",
   }));
 
   return (
@@ -27,11 +30,14 @@ export default async function AdultPage() {
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {enriched.map((m) => (
           <MediaCard
-            key={m.id}
+            key={String(m.id)}
+            id={m.id} // ✅ required prop
             title={m.title}
-            category="Adult"
-            image={`https://image.tmdb.org/t/p/w500${m.poster_path}`}
+            category="adult" // ✅ keep category consistent
+            image={m.poster_path}
             downloadLink={m.download_link}
+            author={m.author}
+            releaseYear={m.release_year}
           />
         ))}
       </div>

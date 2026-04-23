@@ -2,14 +2,13 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import MediaCard from "@/components/MediaCard";
 import { MediaItemRow, TMDBMovie } from "@/types/media";
 
 type EnrichedItem = TMDBMovie & {
   download_link?: string | null;
-  id?: number | string;
+  id: number | string;
 };
 
 const PAGE_SIZE = 24;
@@ -35,14 +34,13 @@ async function enrichMovies(rows: MediaItemRow[]) {
     rows.map(async (r) => {
       const dbDownload = r.download_link ?? null;
 
-      // Skip TMDB lookup when tmdb_id is falsy or 0
       if (!r.tmdb_id || Number(r.tmdb_id) === 0) {
         return {
-          title: (r as any).title ?? `Movie ${r.id}`,
-          poster_path: (r as any).poster_path ?? "",
+          title: r.title ?? `Movie ${r.id}`,
+          poster_path: r.poster_path ?? "",
           id: r.id,
           download_link: dbDownload,
-          release_date: (r as any).release_date ?? "",
+          release_date: r.release_date ?? "",
         } as EnrichedItem;
       }
 
@@ -77,13 +75,14 @@ async function enrichMovies(rows: MediaItemRow[]) {
   );
 }
 
-// --- Necessary edit: accept props as any to avoid PageProps collision in .next/types ---
-export default async function MoviesPage(props: any) {
-  const searchParams = (props && props.searchParams) as
-    | Record<string, string | string[] | undefined>
-    | undefined;
+export default async function MoviesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[]>> }) {
+  const params = await searchParams; // ✅ await first
 
-  const page = Math.max(1, Number(Array.isArray(searchParams?.page) ? searchParams?.page[0] : searchParams?.page ?? "1"));
+  const page = Math.max(
+    1,
+    Number(Array.isArray(params?.page) ? params.page[0] : params.page ?? "1")
+  );
+
   const { rows } = await fetchMovieRows(page);
   const movies = await enrichMovies(rows);
 
@@ -95,7 +94,9 @@ export default async function MoviesPage(props: any) {
     <main className="px-6 py-10">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-purple-700">All Movies</h1>
-        <Link href="/" className="text-sm text-gray-600 hover:underline">← Back to Home</Link>
+        <Link href="/" className="text-sm text-gray-600 hover:underline">
+          ← Back to Home
+        </Link>
       </div>
 
       {movies.length === 0 ? (
@@ -103,23 +104,21 @@ export default async function MoviesPage(props: any) {
       ) : (
         <>
           <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {movies.map((m) => {
-              const key = m.id ?? m.imdb_id ?? m.title ?? Math.random().toString(36).slice(2, 9);
-              const title = m.title ?? `Untitled (${m.id ?? "?"})`;
-              const year = m.release_date ? String(m.release_date).slice(0, 4) : "";
-              const image = m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : "/placeholder-poster.png";
-
-              // If your MediaCard expects an <Image> prop or plain string, this keeps the same API as before
-              return (
-                <MediaCard
-                  key={key}
-                  title={title}
-                  category={year}
-                  image={image}
-                  downloadLink={m.download_link ?? ""}
-                />
-              );
-            })}
+            {movies.map((m) => (
+              <MediaCard
+                key={String(m.id)}
+                id={m.id} // ✅ required prop
+                title={m.title ?? `Untitled (${m.id})`}
+                category="movies" // ✅ keep category consistent
+                image={
+                  m.poster_path
+                    ? `https://image.tmdb.org/t/p/w500${m.poster_path}`
+                    : "/placeholder-poster.png"
+                }
+                downloadLink={m.download_link ?? ""}
+                releaseYear={m.release_date ? m.release_date.slice(0, 4) : ""}
+              />
+            ))}
           </div>
 
           <div className="mt-8 flex items-center justify-between">

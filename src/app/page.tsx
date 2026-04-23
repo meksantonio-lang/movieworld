@@ -4,18 +4,20 @@ export const dynamic = "force-dynamic";
 import { supabase } from "@/lib/supabaseClient";
 import MediaCard from "@/components/MediaCard";
 import { MediaItemRow, TMDBMovie } from "@/types/media";
-import Link from "next/link"; // added for SectionHeader links
+import Link from "next/link";
 
 type EnrichedItem = TMDBMovie & {
   download_link?: string | null;
   id?: number | string;
   imdb_id?: string | null;
+  poster_thumb?: string | null;
+  category?: string; // ✅ preserve category
 };
 
 async function fetchCategoryRows(category: string, limit = 8) {
   const { data, error } = await supabase
     .from("media_items")
-    .select("*")
+    .select("id,title,tmdb_id,poster_path,poster_thumb,download_link,release_date,category,created_at")
     .eq("category", category)
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -27,23 +29,20 @@ async function fetchCategoryRows(category: string, limit = 8) {
   return (data as MediaItemRow[]) ?? [];
 }
 
-/**
- * Enrich rows using TMDB.
- * mediaKind: "movie" | "tv"
- */
 async function enrichRowsWithTMDB(rows: MediaItemRow[], mediaKind: "movie" | "tv") {
   return Promise.all(
     rows.map(async (r) => {
       const dbDownload = r.download_link ?? null;
 
-      // If no tmdb_id, return a minimal fallback object
       if (!r.tmdb_id) {
         return {
-          title: (r as any).title ?? `Item ${r.id}`,
-          poster_path: (r as any).poster_path ?? "",
+          title: r.title ?? `Item ${r.id}`,
+          poster_path: r.poster_path ?? "",
+          poster_thumb: r.poster_thumb ?? null,
           id: r.id,
           download_link: dbDownload,
-          release_date: (r as any).release_date ?? "",
+          release_date: r.release_date ?? "",
+          category: r.category, // ✅ keep category
         } as EnrichedItem;
       }
 
@@ -55,32 +54,39 @@ async function enrichRowsWithTMDB(rows: MediaItemRow[], mediaKind: "movie" | "tv
       try {
         const res = await fetch(`${endpoint}?api_key=${process.env.TMDB_API_KEY}`, { cache: "no-store" });
         if (!res.ok) {
-          console.warn(`TMDB ${mediaKind} fetch failed for id ${r.tmdb_id}:`, res.status);
           return {
             title: `${mediaKind === "movie" ? "Movie" : "Show"} ${r.tmdb_id}`,
             poster_path: "",
+            poster_thumb: r.poster_thumb ?? null,
             id: r.id,
             download_link: dbDownload,
             release_date: "",
+            category: r.category, // ✅ keep category
           } as EnrichedItem;
         }
         const meta: TMDBMovie = await res.json();
-        return { ...meta, download_link: dbDownload, id: r.id } as EnrichedItem;
-      } catch (err) {
-        console.error("TMDB fetch error:", err);
+        return {
+          ...meta,
+          download_link: dbDownload,
+          id: r.id,
+          poster_thumb: r.poster_thumb ?? null,
+          category: r.category, // ✅ keep category
+        } as EnrichedItem;
+      } catch {
         return {
           title: `${mediaKind === "movie" ? "Movie" : "Show"} ${r.tmdb_id}`,
           poster_path: "",
+          poster_thumb: r.poster_thumb ?? null,
           id: r.id,
           download_link: dbDownload,
           release_date: "",
+          category: r.category, // ✅ keep category
         } as EnrichedItem;
       }
     })
   );
 }
 
-// NEW: SectionHeader helper
 function SectionHeader({ title, category }: { title: string; category: string }) {
   return (
     <div className="flex items-center justify-between mb-4">
@@ -97,31 +103,29 @@ function SectionHeader({ title, category }: { title: string; category: string })
 }
 
 export default async function HomePage() {
-  // fetch rows in parallel
-  const [movieRows, songRows, animeRows, kdramaRows] = await Promise.all([
+  const [movieRows, musicRows, animeRows, kdramaRows] = await Promise.all([
     fetchCategoryRows("movies", 8),
-    fetchCategoryRows("songs", 8),
+    fetchCategoryRows("music", 8),
     fetchCategoryRows("anime", 8),
     fetchCategoryRows("kdrama", 8),
   ]);
 
-  // Enrich: movies -> movie endpoint; anime/kdrama -> tv endpoint
   const [movies, anime, kdrama] = await Promise.all([
     enrichRowsWithTMDB(movieRows, "movie"),
     enrichRowsWithTMDB(animeRows, "tv"),
     enrichRowsWithTMDB(kdramaRows, "tv"),
   ]);
 
-  // Songs: use DB fields directly (manual metadata)
-  const songs = (songRows || []).map((s) => ({
-    title: (s as any).title ?? `Song ${s.id}`,
-    poster_path: (s as any).poster_path ?? "",
+  const songs = (musicRows || []).map((s) => ({
+    title: s.title ?? `Song ${s.id}`,
+    poster_path: s.poster_path ?? "",
+    poster_thumb: s.poster_thumb ?? null,
     id: s.id,
     download_link: s.download_link ?? "",
-    release_date: (s as any).release_date ?? "",
+    release_date: s.release_date ?? "",
+    category: s.category, // ✅ keep category
   })) as EnrichedItem[];
 
-  // UPDATED: section helper now uses SectionHeader
   const section = (title: string, category: string, items: EnrichedItem[]) => (
     <section className="mb-12">
       <SectionHeader title={title} category={category} />
@@ -130,17 +134,28 @@ export default async function HomePage() {
       ) : (
         <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
           {items.map((m) => {
-            const key = m.id ?? m.imdb_id ?? m.title ?? Math.random().toString(36).slice(2, 9);
+            const key = String(m.id ?? m.imdb_id ?? m.title ?? Math.random().toString(36).slice(2, 9));
             const titleText = m.title ?? `Untitled (${m.id ?? "?"})`;
             const year = m.release_date ? String(m.release_date).slice(0, 4) : "";
-            const image = m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : "/placeholder-poster.png";
+
+            const image =
+              m.poster_path && String(m.poster_path).trim() !== ""
+                ? String(m.poster_path).startsWith("http")
+                  ? String(m.poster_path)
+                  : `https://image.tmdb.org/t/p/w500${m.poster_path}`
+                : m.poster_thumb && String(m.poster_thumb).trim() !== ""
+                ? String(m.poster_thumb)
+                : "/placeholder-poster.png";
+
             return (
               <MediaCard
                 key={key}
+                id={m.id}
                 title={titleText}
-                category={year}
+                category={m.category ?? ""} // ✅ now shows correct category
                 image={image}
                 downloadLink={m.download_link ?? ""}
+                releaseYear={year}
               />
             );
           })}
@@ -154,7 +169,7 @@ export default async function HomePage() {
       <h1 className="text-3xl font-bold mb-6 text-purple-700">New on Movieworld</h1>
 
       {section("New Movies", "movies", movies)}
-      {section("Trending Songs", "music", songs)}
+      {section("Trending Music", "music", songs)}
       {section("Anime", "anime", anime)}
       {section("Kdrama", "kdrama", kdrama)}
     </main>

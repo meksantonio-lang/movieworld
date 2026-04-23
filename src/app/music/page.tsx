@@ -7,11 +7,12 @@ import MediaCard from "@/components/MediaCard";
 import { MediaItemRow } from "@/types/media";
 
 type EnrichedSong = {
-  id?: number | string;
-  title?: string;
-  poster_path?: string; // now expected to be a Supabase Storage public URL
-  release_date?: string;
-  download_link?: string | null;
+  id: number | string;
+  title: string;
+  poster_path: string;
+  release_date: string;
+  download_link: string;
+  artist?: string | null;
 };
 
 const PAGE_SIZE = 24;
@@ -20,8 +21,8 @@ async function fetchMusicRows(page = 1) {
   const offset = (page - 1) * PAGE_SIZE;
   const { data, error } = await supabase
     .from("media_items")
-    .select("*")
-    .eq("category", "songs")
+    .select("id,title,poster_path,release_date,download_link,artist,created_at") // ✅ include artist column
+    .eq("category", "music")
     .order("created_at", { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1);
 
@@ -36,26 +37,25 @@ function mapMusic(rows: MediaItemRow[]): EnrichedSong[] {
   return rows.map((r) => ({
     id: r.id,
     title: r.title ?? `Song ${r.id}`,
-    poster_path: r.poster_path ?? "", // Supabase Storage URL saved in DB
+    poster_path: r.poster_path ?? "/placeholder-poster.png",
     release_date: r.release_date ?? "",
     download_link: r.download_link ?? "",
+    artist: (r as any).artist ?? null, // ✅ read from artist column
   }));
 }
 
-// --- Necessary edit: accept props as any to avoid PageProps collision ---
-export default async function MusicPage(props: any) {
-  const searchParams = (props && props.searchParams) as
-    | Record<string, string | string[] | undefined>
-    | undefined;
+export default async function MusicPage({ searchParams }: { searchParams: Promise<Record<string, string | string[]>> }) {
+  const params = await searchParams;
 
   const page = Math.max(
     1,
     Number(
-      Array.isArray(searchParams?.page)
-        ? searchParams?.page[0]
-        : searchParams?.page ?? "1"
+      Array.isArray(params?.page)
+        ? params.page[0]
+        : params.page ?? "1"
     )
   );
+
   const { rows } = await fetchMusicRows(page);
   const songs = mapMusic(rows);
 
@@ -73,29 +73,21 @@ export default async function MusicPage(props: any) {
       </div>
 
       {songs.length === 0 ? (
-        <p className="text-sm text-gray-500">No songs found.</p>
+        <p className="text-sm text-gray-500">No music found.</p>
       ) : (
         <>
           <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {songs.map((s) => {
-              const key = s.id ?? Math.random().toString(36).slice(2, 9);
-              const title = s.title ?? `Untitled (${s.id ?? "?"})`;
-              const year = s.release_date
-                ? String(s.release_date).slice(0, 4)
-                : "";
-              // Use Supabase Storage URL directly
-              const image = s.poster_path || "/placeholder-poster.png";
-
-              return (
-                <MediaCard
-                  key={key}
-                  title={title}
-                  category={year}
-                  image={image}
-                  downloadLink={s.download_link ?? ""}
-                />
-              );
-            })}
+            {songs.map((s) => (
+              <MediaCard
+                key={String(s.id)}
+                id={s.id}
+                title={s.title}
+                category={s.artist ?? "music"} // ✅ show artist if available
+                image={s.poster_path}
+                downloadLink={s.download_link}
+                releaseYear={s.release_date ? s.release_date.slice(0, 4) : ""}
+              />
+            ))}
           </div>
 
           <div className="mt-8 flex items-center justify-between">
