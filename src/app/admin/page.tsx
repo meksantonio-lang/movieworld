@@ -78,6 +78,26 @@ export default function AdminPage() {
     }
     fetchItems();
   }, [activeTab]);
+
+if (!session) {
+    return (
+      <div style={{ padding: 20 }}>
+        <h1>Admin Login</h1>
+        <Auth supabaseClient={supabase} appearance={{ theme: ThemeSupa }} />
+      </div>
+    );
+  }
+
+  if (session.user.email !== ADMIN_EMAIL) {
+    return (
+      <div style={{ padding: 20 }}>
+        <h1>Access Denied</h1>
+        <p>Signed in as {session.user.email}</p>
+        <button onClick={() => supabase.auth.signOut()}>Logout</button>
+      </div>
+    );
+  }
+
   // TMDB search helper
   async function fetchFromTMDB(title: string, category: "movies" | "anime" | "kdrama") {
     const type = category === "movies" ? "movie" : "tv";
@@ -670,13 +690,13 @@ export default function AdminPage() {
 
       {/* Logout */}
       <div style={{ marginTop: 20 }}>
-        <button
-          onClick={() => supabase.auth.signOut()}
-          style={{ padding: "8px 12px", borderRadius: 6 }}
-        >
-          Logout
-        </button>
-      </div>
-    </main>
-  );
+  <button
+    onClick={() => supabase.auth.signOut()}
+    style={{ padding: "8px 12px", borderRadius: 6 }}
+  >
+    Logout
+  </button>
+</div>
+</main>
+);
 }
