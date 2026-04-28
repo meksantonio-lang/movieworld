@@ -7,8 +7,6 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { saveMovieDetails } from "@/lib/mediaService";
 
-
-
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -18,64 +16,33 @@ const ADMIN_EMAIL = "meksantonio@gmail.com";
 type Tab = "movies" | "anime" | "kdrama" | "music" | "books";
 
 export default function AdminPage() {
-  // -------------------------
-  // ALL hooks declared first
-  // -------------------------
   const [session, setSession] = useState<Session | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("movies");
   const [bookMatches, setBookMatches] = useState<any[] | null>(null);
 
-// Add new states for TMDB ID save functionality
   const [movieId, setMovieId] = useState("");
   const [tmdbResponse, setTmdbResponse] = useState<any>(null);
 
-// ...existing code...
-  // Add new handleSave function
-  async function handleSave() {
-    if (!movieId) {
-      alert("Enter a Movie ID");
-      return;
-    }
-    // Fetch TMDB details first (assuming movie for simplicity, adjust if needed)
-    const details = await fetchTmdbDetails(movieId, "movie");
-    if (!details) {
-      alert("Failed to fetch TMDB details");
-      return;
-    }
-    setTmdbResponse(details);
-    await saveMovieDetails(movieId, details);
-    alert("Details saved!");
-    setMovieId("");
-    setTmdbResponse(null);
-  }
-
-  // shared form state
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState("");
   const [cover, setCover] = useState("");
   const [releaseYear, setReleaseYear] = useState<number | "">("");
   const [downloadUrl, setDownloadUrl] = useState("");
 
-  // music/book extra fields
   const [artist, setArtist] = useState("");
   const [album, setAlbum] = useState("");
   const [author, setAuthor] = useState("");
 
-  // list + loading + error
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // TMDB match UI state
   const [tmdbMatches, setTmdbMatches] = useState<any[] | null>(null);
   const [tmdbLoading, setTmdbLoading] = useState(false);
   const [tmdbError, setTmdbError] = useState<string | null>(null);
-  // remember whether the last search was for movie or tv so we can fetch details
   const [tmdbCategory, setTmdbCategory] = useState<"movie" | "tv" | null>(null);
-  // persist selected TMDB id for saving
   const [tmdbId, setTmdbId] = useState<number | null>(null);
 
-  // auth session listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -84,9 +51,7 @@ export default function AdminPage() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // fetch helper (unconditional hook usage)
   useEffect(() => {
-    // fetch items when activeTab changes
     async function fetchItems() {
       setLoading(true);
       setError(null);
@@ -113,32 +78,9 @@ export default function AdminPage() {
     }
     fetchItems();
   }, [activeTab]);
-
-  // -------------------------
-  // Now safe to conditionally render
-  // -------------------------
-  if (!session) {
-    return (
-      <div style={{ padding: 20 }}>
-        <h1>Admin Login</h1>
-        <Auth supabaseClient={supabase} appearance={{ theme: ThemeSupa }} />
-      </div>
-    );
-  }
-
-  if (session.user.email !== ADMIN_EMAIL) {
-    return (
-      <div style={{ padding: 20 }}>
-        <h1>Access Denied</h1>
-        <p>Signed in as {session.user.email}</p>
-        <button onClick={() => supabase.auth.signOut()}>Logout</button>
-      </div>
-    );
-  }
-
-  // CLIENT: proxy-based TMDB search (calls server route /api/tmdb-search)
-  async function fetchFromTMDB(title: string, category: "movie" | "anime" | "kdrama") {
-    const type = category === "movie" ? "movie" : "tv";
+  // TMDB search helper
+  async function fetchFromTMDB(title: string, category: "movies" | "anime" | "kdrama") {
+    const type = category === "movies" ? "movie" : "tv";
     try {
       const resp = await fetch(`/api/tmdb-search?q=${encodeURIComponent(title)}&type=${type}`);
       if (!resp.ok) {
@@ -153,7 +95,7 @@ export default function AdminPage() {
     }
   }
 
-  // CLIENT: fetch full details via server proxy (calls /api/tmdb-details)
+  // TMDB details helper
   async function fetchTmdbDetails(id: number | string, kind: "movie" | "tv") {
     try {
       const resp = await fetch(`/api/tmdb-details?id=${encodeURIComponent(String(id))}&kind=${kind}`);
@@ -161,120 +103,114 @@ export default function AdminPage() {
         console.warn("tmdb details proxy non-ok:", resp.status, await resp.text());
         return null;
       }
-      const json = await resp.json();
-      return json;
+      return await resp.json();
     } catch (err) {
       console.error("fetchTmdbDetails proxy error:", err);
       return null;
     }
   }
 
-// CLIENT: proxy-based MusicBrainz search (calls server route /api/autofill-music)
-async function fetchFromMusicBrainz(artist: string, track: string) {
-  try {
-    const resp = await fetch("/api/autofill-music", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ artist, track }),
-    });
-    if (!resp.ok) {
-      console.warn("MusicBrainz proxy non-ok:", resp.status, await resp.text());
+  // Spotify search helper (calls /api/autofill-spotify)
+  async function fetchFromSpotify(query: string) {
+    try {
+      const resp = await fetch("/api/autofill-spotify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      if (!resp.ok) {
+        console.warn("Spotify proxy non-ok:", resp.status, await resp.text());
+        return null;
+      }
+      return await resp.json();
+    } catch (err) {
+      console.error("fetchFromSpotify proxy error:", err);
       return null;
     }
-    return await resp.json();
-  } catch (err) {
-    console.error("fetchFromMusicBrainz proxy error:", err);
-    return null;
   }
-}
 
-async function fetchFromOpenLibrary(title: string, author?: string) {
-  try {
-    const resp = await fetch("/api/autofill-book", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, author }),
-    });
-    if (!resp.ok) return null;
-    return await resp.json();
-  } catch {
-    return null;
+  // OpenLibrary helper
+  async function fetchFromOpenLibrary(title: string, author?: string) {
+    try {
+      const resp = await fetch("/api/autofill-book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, author }),
+      });
+      if (!resp.ok) return null;
+      return await resp.json();
+    } catch {
+      return null;
+    }
   }
-}
 
+  // Handle form submission
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
 
-  // replace existing handleSubmit with this
-async function handleSubmit(e: React.FormEvent) {
-  e.preventDefault();
-  setError(null);
-
-  // Build the media_items payload
-  const mediaPayload: any = {
-    title: title || null,
-    tmdb_id: tmdbId ?? null,
-    category: activeTab, // movies, anime, kdrama, music, books
-    download_link: downloadUrl || null,
-    cover_url: cover || null,
-    genre: genre || null, // comma separated names
-    release_year: typeof releaseYear === "number" && !Number.isNaN(releaseYear) ? releaseYear : null,
-    metadata: null, // optional: full TMDB details if you fetched them
-  };
-
-  // If you fetched details earlier and want to persist them:
-  // const details = await fetchTmdbDetails(tmdbId, tmdbCategory === "tv" ? "tv" : "movie");
-  // mediaPayload.metadata = details ?? null;
-
-  // Optional: include music/book specific fields inside metadata or separate columns
-  if (activeTab === "music") {
-    mediaPayload.metadata = {
-      ...(mediaPayload.metadata || {}),
-      artist,
-      album,
+    const mediaPayload: any = {
+      title: title || null,
+      tmdb_id: tmdbId ?? null,
+      category: activeTab,
+      download_link: downloadUrl || null,
+      cover_url: cover || null,
+      genre: genre || null,
+      release_year: typeof releaseYear === "number" && !Number.isNaN(releaseYear) ? releaseYear : null,
+      metadata: null,
     };
-  }
-  if (activeTab === "books") {
-    mediaPayload.metadata = {
-      ...(mediaPayload.metadata || {}),
-      author,
-    };
-  }
 
-  try {
-    // Insert into media_items table directly
-    const { data, error: insertErr } = await supabase
-      .from("media_items")
-      .insert([mediaPayload])
-      .select()
-      .single();
-
-    if (insertErr) {
-      console.error("Insert media_items error:", insertErr);
-      setError(insertErr.message || "Insert failed");
-      return;
+    if (activeTab === "music") {
+      const spotifyData = await fetchFromSpotify(title);
+      if (spotifyData) {
+        mediaPayload.metadata = {
+          artist: spotifyData.artist,
+          album: spotifyData.album,
+          release_date: spotifyData.release_date,
+          cover_url: spotifyData.cover_url,
+          spotify_id: spotifyData.id,
+        };
+      } else {
+        mediaPayload.metadata = { artist, album };
+      }
     }
 
-    alert(`${activeTab} added to media_items successfully`);
-    // clear form
-    setTitle(""); setGenre(""); setCover(""); setReleaseYear(""); setDownloadUrl("");
-    setArtist(""); setAlbum(""); setAuthor("");
-    setTmdbId(null);
-    setTmdbMatches(null);
-    setTmdbError(null);
-    setTmdbCategory(null);
+    if (activeTab === "books") {
+      mediaPayload.metadata = {
+        ...(mediaPayload.metadata || {}),
+        author,
+      };
+    }
 
-    // refresh list (if your frontend reads from media_items)
-    const { data: refreshed } = await supabase
-      .from("media_items")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100);
-    setItems(refreshed ?? []);
-  } catch (err: any) {
-    console.error("Submit error:", err);
-    setError(err.message || "Unknown error");
+    try {
+      const { data, error: insertErr } = await supabase
+        .from("media_items")
+        .insert([mediaPayload])
+        .select()
+        .single();
+
+      if (insertErr) {
+        console.error("Insert media_items error:", insertErr);
+        setError(insertErr.message || "Insert failed");
+        return;
+      }
+
+      alert(`${activeTab} added to media_items successfully`);
+      setTitle(""); setGenre(""); setCover(""); setReleaseYear(""); setDownloadUrl("");
+      setArtist(""); setAlbum(""); setAuthor("");
+      setTmdbId(null); setTmdbMatches(null); setTmdbError(null); setTmdbCategory(null);
+
+      const { data: refreshed } = await supabase
+        .from("media_items")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      setItems(refreshed ?? []);
+    } catch (err: any) {
+      console.error("Submit error:", err);
+      setError(err.message || "Unknown error");
+    }
   }
-}
-
 
   const buttonStyle: React.CSSProperties = {
     background: "#0070f3",
@@ -285,35 +221,31 @@ async function handleSubmit(e: React.FormEvent) {
     cursor: "pointer",
   };
 
-  // Helper to apply a selected TMDB match into the form (UPDATED: fetch details via proxy to get genre names)
+  // Proper TMDB match application
   async function applyTmdbMatch(match: any) {
-    // Determine kind: prefer tmdbCategory if set, otherwise infer
-    const kind: "movie" | "tv" = tmdbCategory === "tv" ? "tv" : tmdbCategory === "movie" ? "movie" : (match.title ? "movie" : "tv");
+    const kind: "movie" | "tv" =
+      tmdbCategory === "tv" ? "tv" :
+      tmdbCategory === "movie" ? "movie" :
+      (match.title ? "movie" : "tv");
+
     const matchedTitle = match.title ?? match.name ?? title;
     const posterPath = match.poster_path ? `https://image.tmdb.org/t/p/w500${match.poster_path}` : "";
     const yearStr = match.release_date ?? match.first_air_date ?? "";
     const yearNum = yearStr ? Number(String(yearStr).split("-")[0]) : "";
 
-    // Try to fetch full details via server proxy to get genre names
     try {
       const details = await fetchTmdbDetails(match.id, kind);
       let genreStr = "";
       if (details && Array.isArray(details.genres)) {
-        // genres is an array of { id, name }
         genreStr = details.genres.map((g: any) => g.name).join(",");
       } else if (Array.isArray(match.genre_ids) && match.genre_ids.length > 0) {
-        // fallback to IDs if names not available
         genreStr = match.genre_ids.join(",");
-      } else {
-        genreStr = "";
       }
 
       setTitle(matchedTitle);
       setCover(posterPath);
       setReleaseYear(yearNum || "");
       setGenre(genreStr);
-
-      // persist selected TMDB id in state for saving
       setTmdbId(match.id ?? null);
     } catch (err) {
       console.error("applyTmdbMatch error:", err);
@@ -324,25 +256,92 @@ async function handleSubmit(e: React.FormEvent) {
       setGenre(fallbackGenre);
       setTmdbId(match.id ?? null);
     } finally {
-      // clear matches and category after applying
       setTmdbMatches(null);
       setTmdbError(null);
       setTmdbCategory(null);
     }
   }
 
+  async function handleSave(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    if (!movieId.trim()) {
+      alert("Enter a TMDB ID to save");
+      return;
+    }
+
+    if (!["movies", "anime", "kdrama"].includes(activeTab)) {
+      alert("TMDB save is only available for movies, anime, or kdrama");
+      return;
+    }
+
+    const kind = activeTab === "movies" ? "movie" : "tv";
+    setTmdbError(null);
+    setTmdbLoading(true);
+
+    try {
+      const details = await fetchTmdbDetails(Number(movieId), kind);
+      if (!details) {
+        alert("TMDB details not found for that ID");
+        return;
+      }
+
+      const genreStr = Array.isArray(details.genres)
+        ? details.genres.map((g: any) => g.name).join(",")
+        : "";
+      const coverUrl = details.poster_path ? `https://image.tmdb.org/t/p/w500${details.poster_path}` : "";
+      const releaseDate = details.release_date ?? details.first_air_date ?? "";
+      const releaseYearNum = releaseDate ? Number(String(releaseDate).split("-")[0]) : null;
+
+      const mediaPayload: any = {
+        title: details.title ?? details.name ?? null,
+        tmdb_id: details.id ?? null,
+        category: activeTab,
+        download_link: null,
+        cover_url: coverUrl || null,
+        genre: genreStr || null,
+        release_year: releaseYearNum,
+        metadata: null,
+      };
+
+      const { error: insertErr } = await supabase
+        .from("media_items")
+        .insert([mediaPayload]);
+
+      if (insertErr) {
+        console.error("Save by TMDB ID error:", insertErr);
+        alert("Save failed: " + insertErr.message);
+        return;
+      }
+
+      alert("TMDB details saved successfully");
+      setMovieId("");
+
+      const { data: refreshed } = await supabase
+        .from("media_items")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      setItems(refreshed ?? []);
+    } catch (err: any) {
+      console.error("Save by TMDB ID failed:", err);
+      alert("Failed to save TMDB details");
+    } finally {
+      setTmdbLoading(false);
+    }
+  }
+
   return (
     <main style={{ padding: 20 }}>
       <h1>Admin Dashboard</h1>
-      <p>Welcome, <strong>{session.user.email}</strong></p>
+      <p>Welcome, <strong>{session?.user?.email}</strong></p>
 
+      {/* Navigation Tabs */}
       <nav style={{ marginBottom: 20 }}>
         {(["movies","anime","kdrama","music","books"] as Tab[]).map(tab => (
           <button
             key={tab}
             onClick={() => {
               setActiveTab(tab);
-              // clear TMDB UI when switching tabs
               setTmdbMatches(null);
               setTmdbError(null);
               setTmdbCategory(null);
@@ -363,6 +362,7 @@ async function handleSubmit(e: React.FormEvent) {
         ))}
       </nav>
 
+      {/* Add Form */}
       <section style={{ marginBottom: 24 }}>
         <h2>Add {activeTab}</h2>
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 520 }}>
@@ -378,39 +378,88 @@ async function handleSubmit(e: React.FormEvent) {
             <>
               <input placeholder="Artist" value={artist} onChange={(e) => setArtist(e.target.value)} />
               <input placeholder="Album" value={album} onChange={(e) => setAlbum(e.target.value)} />
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!title) {
+                    alert("Enter a track title to autofill from Spotify");
+                    return;
+                  }
+                  const data = await fetchFromSpotify(title);
+                  if (!data) {
+                    alert("No result from Spotify");
+                    return;
+                  }
+                  setTitle(data.title || title);
+                  setGenre(data.genre || "");
+                  setCover(data.cover_url || "");
+                  setReleaseYear(data.release_year || "");
+                  setArtist(data.artist || "");
+                  setAlbum(data.album || "");
+                }}
+                style={buttonStyle}
+              >
+                Autofill (Spotify)
+              </button>
             </>
           )}
           {activeTab === "books" && (
-            <input placeholder="Author" value={author} onChange={(e) => setAuthor(e.target.value)} />
+            <>
+              <input placeholder="Author" value={author} onChange={(e) => setAuthor(e.target.value)} />
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!title) {
+                    alert("Enter a book title");
+                    return;
+                  }
+                  const data = await fetchFromOpenLibrary(title, author);
+                  if (!data || !data.results) {
+                    alert("No result from OpenLibrary");
+                    return;
+                  }
+                  if (data.results.length === 1) {
+                    const b = data.results[0];
+                    setTitle(b.title);
+                    setAuthor(b.author);
+                    setReleaseYear(b.publishYear || "");
+                    setCover(b.coverUrl || "");
+                    setDownloadUrl(b.downloadUrl || "");
+                  } else {
+                    setBookMatches(data.results);
+                  }
+                }}
+                style={buttonStyle}
+              >
+                Autofill (OpenLibrary)
+              </button>
+            </>
           )}
           <input placeholder="Download URL" value={downloadUrl} onChange={(e) => setDownloadUrl(e.target.value)} required />
           <div style={{ display: "flex", gap: 10 }}>
             <button type="submit" style={buttonStyle}>Save {activeTab}</button>
-            <button
-              type="button"
-              onClick={async () => {
-                if (!title) return alert("Enter a title to autofill from TMDB");
-                if (activeTab === "movies" || activeTab === "anime" || activeTab === "kdrama") {
-                  const cat = activeTab === "movies" ? "movie" : activeTab === "anime" ? "anime" : "kdrama";
-                  // set tmdbCategory so applyTmdbMatch knows which details endpoint to call
-                  setTmdbCategory(cat === "movie" ? "movie" : "tv");
+            {activeTab === "movies" || activeTab === "anime" || activeTab === "kdrama" ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!title) return alert("Enter a title to autofill from TMDB");
+                  const cat = activeTab === "movies" ? "movie" : "tv";
+                  setTmdbCategory(cat as "movie" | "tv");
                   setTmdbMatches(null);
                   setTmdbError(null);
                   setTmdbLoading(true);
                   try {
-                    const results = await fetchFromTMDB(title, cat as any);
+                    const results = await fetchFromTMDB(title, activeTab);
                     setTmdbLoading(false);
                     if (!results || results.length === 0) {
                       setTmdbMatches([]);
                       alert("No result from TMDB");
                       return;
                     }
-                    // If exactly one result, apply it immediately (applyTmdbMatch will fetch details via proxy)
                     if (results.length === 1) {
                       applyTmdbMatch(results[0]);
                       return;
                     }
-                    // Multiple results: show a selectable list
                     setTmdbMatches(results);
                   } catch (err: any) {
                     setTmdbLoading(false);
@@ -418,113 +467,46 @@ async function handleSubmit(e: React.FormEvent) {
                     setTmdbError("Failed to fetch from TMDB");
                     alert("No result from TMDB");
                   }
-                } else {
-                  alert("Autofill only available for movies/anime/kdrama");
-                }
-              }}
-              style={{ padding: "8px 12px", borderRadius: 6, cursor: "pointer" }}
-            >
-              Autofill (TMDB)
-            </button>
-            {activeTab === "music" && (
-  <button
-    type="button"
-    onClick={async () => {
-      if (!title || !artist) {
-        alert("Enter both artist and track title to autofill from TheAudioDB");
-        return;
-      }
-      const data = await fetchFromMusicBrainz(artist, title);
-      if (!data) {
-        alert("No result from MusicBrainz");
-        return;
-      }
-      setTitle(data.title || title);
-      setGenre(data.genre || "");
-      setCover(data.coverUrl || "");
-      setReleaseYear(data.releaseYear || "");
-      setArtist(data.artist || artist);
-      setAlbum(data.album || "");
-    }}
-    style={buttonStyle}
-  >
-    Autofill (MusicBrainz)
-  </button>
-)}
-
-{activeTab === "books" && (
-  <>
-    <button
-      type="button"
-      onClick={async () => {
-        if (!title) {
-          alert("Enter a book title");
-          return;
-        }
-        const data = await fetchFromOpenLibrary(title, author);
-        if (!data || !data.results) {
-          alert("No result from OpenLibrary");
-          return;
-        }
-
-        if (data.results.length === 1) {
-          const b = data.results[0];
-          setTitle(b.title);
-          setAuthor(b.author);
-          setReleaseYear(b.publishYear || "");
-          setCover(b.coverUrl || "");
-          setDownloadUrl(b.downloadUrl || "");
-        } else {
-          setBookMatches(data.results); // show multiple matches
-        }
-      }}
-      style={buttonStyle}
-    >
-      Autofill (OpenLibrary)
-    </button>
-
-    {bookMatches && (
-      <div style={{ marginTop: 20 }}>
-        <h3>OpenLibrary Matches</h3>
-        <ul>
-          {bookMatches.map((match, idx) => (
-            <li key={idx} style={{ marginBottom: 10 }}>
-              <strong>{match.title}</strong> by {match.author} ({match.publishYear})
-              <br />
-              {match.coverUrl && (
-                <img
-                  src={match.coverUrl}
-                  alt={match.title}
-                  style={{ width: 100, marginTop: 5 }}
-                />
-              )}
-              <br />
-              <button
-                onClick={() => {
-                  setTitle(match.title);
-                  setAuthor(match.author);
-                  setReleaseYear(match.publishYear || "");
-                  setCover(match.coverUrl || "");
-                  setDownloadUrl(match.downloadUrl || "");
-                  setBookMatches(null); // clear after selection
                 }}
-                style={buttonStyle}
+                style={{ padding: "8px 12px", borderRadius: 6, cursor: "pointer" }}
               >
-                Use this
+                Autofill (TMDB)
               </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    )}
-  </>
-)}
-
-
-
+            ) : null}
           </div>
         </form>
 
+        {/* Book Matches */}
+        {bookMatches && (
+          <div style={{ marginTop: 20 }}>
+            <h3>OpenLibrary Matches</h3>
+            <ul>
+              {bookMatches.map((match, idx) => (
+                <li key={idx} style={{ marginBottom: 10 }}>
+                  <strong>{match.title}</strong> by {match.author} ({match.publishYear})
+                  <br />
+                  {match.coverUrl && (
+                    <img src={match.coverUrl} alt={match.title} style={{ width: 100, marginTop: 5 }} />
+                  )}
+                  <br />
+                  <button
+                    onClick={() => {
+                      setTitle(match.title);
+                      setAuthor(match.author);
+                      setReleaseYear(match.publishYear || "");
+                      setCover(match.coverUrl || "");
+                      setDownloadUrl(match.downloadUrl || "");
+                      setBookMatches(null);
+                    }}
+                    style={buttonStyle}
+                  >
+                    Use this
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {/* TMDB matches UI */}
         {tmdbLoading && <p style={{ marginTop: 8 }}>Searching TMDB...</p>}
         {tmdbError && <p style={{ color: "red", marginTop: 8 }}>TMDB error: {tmdbError}</p>}
@@ -550,13 +532,38 @@ async function handleSubmit(e: React.FormEvent) {
                     }}
                     onClick={() => applyTmdbMatch(m)}
                   >
-                    {thumb ? <img src={thumb} alt={mTitle} style={{ width: 56, height: 84, objectFit: "cover", borderRadius: 4 }} /> : <div style={{ width: 56, height: 84, background: "#f0f0f0", borderRadius: 4 }} />}
+                    {thumb ? (
+                      <img
+                        src={thumb}
+                        alt={mTitle}
+                        style={{ width: 56, height: 84, objectFit: "cover", borderRadius: 4 }}
+                      />
+                    ) : (
+                      <div style={{ width: 56, height: 84, background: "#f0f0f0", borderRadius: 4 }} />
+                    )}
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600 }}>{mTitle} {mYear ? <span style={{ color: "#666", fontWeight: 400 }}>({mYear})</span> : null}</div>
-                      <div style={{ fontSize: 13, color: "#666" }}>{m.overview ? (m.overview.length > 140 ? m.overview.slice(0, 137) + "..." : m.overview) : null}</div>
+                      <div style={{ fontWeight: 600 }}>
+                        {mTitle}{" "}
+                        {mYear ? (
+                          <span style={{ color: "#666", fontWeight: 400 }}>({mYear})</span>
+                        ) : null}
+                      </div>
+                      <div style={{ fontSize: 13, color: "#666" }}>
+                        {m.overview
+                          ? m.overview.length > 140
+                            ? m.overview.slice(0, 137) + "..."
+                            : m.overview
+                          : null}
+                      </div>
                     </div>
                     <div style={{ marginLeft: 8 }}>
-                      <button style={{ padding: "6px 10px", borderRadius: 6, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); applyTmdbMatch(m); }}>
+                      <button
+                        style={{ padding: "6px 10px", borderRadius: 6, cursor: "pointer" }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          applyTmdbMatch(m);
+                        }}
+                      >
                         Use
                       </button>
                     </div>
@@ -565,7 +572,15 @@ async function handleSubmit(e: React.FormEvent) {
               })}
             </div>
             <div style={{ marginTop: 8 }}>
-              <button onClick={() => { setTmdbMatches(null); setTmdbCategory(null); }} style={{ padding: "6px 10px", borderRadius: 6, cursor: "pointer" }}>Cancel</button>
+              <button
+                onClick={() => {
+                  setTmdbMatches(null);
+                  setTmdbCategory(null);
+                }}
+                style={{ padding: "6px 10px", borderRadius: 6, cursor: "pointer" }}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         )}
@@ -576,7 +591,7 @@ async function handleSubmit(e: React.FormEvent) {
         {error && <p style={{ color: "red" }}>Error: {error}</p>}
       </section>
 
-{/* Add new section for saving by TMDB ID */}
+      {/* Save by TMDB ID */}
       <section style={{ marginBottom: 24 }}>
         <h2>Save by TMDB ID</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 520 }}>
@@ -587,22 +602,23 @@ async function handleSubmit(e: React.FormEvent) {
             onChange={(e) => setMovieId(e.target.value)}
             style={{ padding: "8px", border: "1px solid #ccc", borderRadius: 4 }}
           />
-          <button
-            onClick={handleSave}
-            style={buttonStyle}
-          >
+          <button onClick={handleSave} style={buttonStyle}>
             Save TMDB Details
           </button>
         </div>
       </section>
 
+      {/* Existing Items */}
       <section>
         <h2>Existing {activeTab}</h2>
         {loading ? <p>Loading...</p> : null}
         {!loading && items.length === 0 && <p>No items found.</p>}
         <ul style={{ listStyle: "none", padding: 0 }}>
           {items.map((it: any) => (
-            <li key={it.id ?? JSON.stringify(it)} style={{ marginBottom: 12, borderBottom: "1px solid #eee", paddingBottom: 8 }}>
+            <li
+              key={it.id ?? JSON.stringify(it)}
+              style={{ marginBottom: 12, borderBottom: "1px solid #eee", paddingBottom: 8 }}
+            >
               <strong>{it.title ?? it.name}</strong>
               <div style={{ fontSize: 13, color: "#555" }}>
                 {it.genre ? `Genre: ${it.genre}` : null}
@@ -611,17 +627,30 @@ async function handleSubmit(e: React.FormEvent) {
                 {it.release_year ? ` • Year: ${it.release_year}` : null}
               </div>
               <div style={{ marginTop: 6 }}>
-                <a href={it.download_url} target="_blank" rel="noreferrer" style={{ marginRight: 12 }}>Download</a>
+                <a
+                  href={it.download_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ marginRight: 12 }}
+                >
+                  Download
+                </a>
                 <button
                   onClick={async () => {
                     if (!confirm("Delete this item?")) return;
                     try {
-                      const { error: delErr } = await supabase.from(activeTab).delete().eq("id", it.id);
+                      const { error: delErr } = await supabase
+                        .from(activeTab)
+                        .delete()
+                        .eq("id", it.id);
                       if (delErr) {
                         alert("Delete error: " + delErr.message);
                       } else {
-                        // refresh
-                        const { data } = await supabase.from(activeTab).select("*").order("created_at", { ascending: false }).limit(100);
+                        const { data } = await supabase
+                          .from(activeTab)
+                          .select("*")
+                          .order("created_at", { ascending: false })
+                          .limit(100);
                         setItems(data ?? []);
                       }
                     } catch (err) {
@@ -639,8 +668,14 @@ async function handleSubmit(e: React.FormEvent) {
         </ul>
       </section>
 
+      {/* Logout */}
       <div style={{ marginTop: 20 }}>
-        <button onClick={() => supabase.auth.signOut()} style={{ padding: "8px 12px", borderRadius: 6 }}>Logout</button>
+        <button
+          onClick={() => supabase.auth.signOut()}
+          style={{ padding: "8px 12px", borderRadius: 6 }}
+        >
+          Logout
+        </button>
       </div>
     </main>
   );
