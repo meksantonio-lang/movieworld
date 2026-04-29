@@ -79,14 +79,16 @@ export default async function MusicPage({ searchParams }: { searchParams: Promis
           <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {songs.map((s) => (
               <MediaCard
-                key={String(s.id)}
-                id={s.id}
-                title={s.title}
-                category={s.artist ?? "music"} // ✅ show artist if available
-                image={s.poster_path}
-                downloadLink={s.download_link}
-                releaseYear={s.release_date ? s.release_date.slice(0, 4) : ""}
-              />
+  key={String(s.id)}
+  id={s.id}
+  title={s.title}
+  category="music" // ✅ force category to "music"
+  image={s.poster_path}
+  downloadLink={s.download_link}
+  releaseYear={s.release_date ? s.release_date.slice(0, 4) : ""}
+  artist={s.artist ?? ""} // ✅ pass artist separately if you want to show it
+/>
+
             ))}
           </div>
 

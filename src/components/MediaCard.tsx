@@ -10,6 +10,7 @@ export interface MediaCardProps {
   downloadLink: string;
   author?: string;
   releaseYear?: string | number | null;
+   artist?: string; // ✅ add this line
 }
 
 export default function MediaCard({
@@ -20,6 +21,7 @@ export default function MediaCard({
   downloadLink,
   author,
   releaseYear,
+  artist,
 }: MediaCardProps) {
   const isExternal = image?.startsWith("http");
 
@@ -55,6 +57,7 @@ export default function MediaCard({
           </Link>
         </h3>
         <p className="text-sm text-gray-500">{category}</p>
+        {artist && <p className="text-sm text-gray-700">Artist: {artist}</p>}
         {author && <p className="text-sm text-gray-700">By {author}</p>}
         {releaseYear && (
           <p className="text-sm text-gray-700">Published {releaseYear}</p>
