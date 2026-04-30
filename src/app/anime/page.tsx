@@ -1,7 +1,6 @@
 // src/app/anime/page.tsx
 export const dynamic = "force-dynamic";
 
-import React from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import MediaCard from "@/components/MediaCard";
@@ -108,9 +107,9 @@ export default async function AnimePage({ searchParams }: { searchParams: Promis
             {anime.map((m) => (
               <MediaCard
                 key={String(m.id)}
-                id={m.id} // ✅ required prop
+                id={m.id}
                 title={(m as TMDBTvShow).name ?? (m as TMDBMovie).title ?? `Untitled (${m.id})`}
-                category="anime" // ✅ keep category consistent
+                category="anime"
                 image={
                   m.poster_path
                     ? `https://image.tmdb.org/t/p/w500${m.poster_path}`

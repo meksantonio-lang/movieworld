@@ -1,4 +1,3 @@
-// src/components/globalSearch.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -18,10 +17,13 @@ export default function GlobalSearch() {
         return;
       }
 
+      // ✅ Expanded search: title OR artist OR author
       const { data, error } = await supabase
         .from("media_items")
         .select("*")
-        .ilike("title", `%${query}%`)
+        .or(
+          `title.ilike.%${query}%,artist.ilike.%${query}%,author.ilike.%${query}%`
+        )
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -69,26 +71,36 @@ export default function GlobalSearch() {
             {/* Results */}
             <div className="max-h-[60vh] overflow-y-auto p-2">
               {results.length > 0 ? (
-                results.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/${item.category}?id=${item.id}`}
-                    onClick={() => { setIsOpen(false); setQuery(""); }}
-                    className="flex items-center gap-4 p-3 hover:bg-white/5 rounded-xl transition-colors group"
-                  >
-                    <div className="w-10 h-10 bg-zinc-800 rounded-lg flex items-center justify-center text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-                      {item.category === "movies" && <Film size={18} />}
-                      {item.category === "books" && <Book size={18} />}
-                      {item.category === "songs" && <Music size={18} />}
-                    </div>
-                    <div>
-                      <h4 className="text-white font-medium">{item.title}</h4>
-                      <p className="text-xs text-zinc-500 uppercase tracking-tighter">
-                        {item.category}
-                      </p>
-                    </div>
-                  </Link>
-                ))
+                results.map((item) => {
+                  // ✅ Normalize category names to match your folder structure
+                  const categoryPath =
+                    item.category === "music"
+                      ? "music"
+                      : item.category === "movies"
+                      ? "movies"
+                      : "books";
+
+                  return (
+                    <Link
+                      key={item.id}
+                      href={`/${categoryPath}/${item.id}`} // ✅ direct to detail page
+                      onClick={() => { setIsOpen(false); setQuery(""); }}
+                      className="flex items-center gap-4 p-3 hover:bg-white/5 rounded-xl transition-colors group"
+                    >
+                      <div className="w-10 h-10 bg-zinc-800 rounded-lg flex items-center justify-center text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                        {categoryPath === "movies" && <Film size={18} />}
+                        {categoryPath === "books" && <Book size={18} />}
+                        {categoryPath === "music" && <Music size={18} />}
+                      </div>
+                      <div>
+                        <h4 className="text-white font-medium">{item.title}</h4>
+                        <p className="text-xs text-zinc-500 uppercase tracking-tighter">
+                          {item.category}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })
               ) : query !== "" ? (
                 <div className="p-10 text-center text-zinc-500">
                   No matches for "{query}"

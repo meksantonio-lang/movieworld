@@ -1,4 +1,3 @@
-// src/app/movies/page.tsx
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
@@ -75,12 +74,11 @@ async function enrichMovies(rows: MediaItemRow[]) {
   );
 }
 
-export default async function MoviesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[]>> }) {
-  const params = await searchParams; // ✅ await first
-
+export default async function MoviesPage({ searchParams }: { searchParams: Record<string, string | string[]> }) {
+  // ✅ searchParams is already resolved, no Promise/await needed
   const page = Math.max(
     1,
-    Number(Array.isArray(params?.page) ? params.page[0] : params.page ?? "1")
+    Number(Array.isArray(searchParams?.page) ? searchParams.page[0] : searchParams.page ?? "1")
   );
 
   const { rows } = await fetchMovieRows(page);
@@ -107,9 +105,9 @@ export default async function MoviesPage({ searchParams }: { searchParams: Promi
             {movies.map((m) => (
               <MediaCard
                 key={String(m.id)}
-                id={m.id} // ✅ required prop
+                id={m.id}
                 title={m.title ?? `Untitled (${m.id})`}
-                category="movies" // ✅ keep category consistent
+                category="movies" // ✅ always "movies"
                 image={
                   m.poster_path
                     ? `https://image.tmdb.org/t/p/w500${m.poster_path}`

@@ -17,7 +17,9 @@ type EnrichedItem = TMDBMovie & {
 async function fetchCategoryRows(category: string, limit = 8) {
   const { data, error } = await supabase
     .from("media_items")
-    .select("id,title,tmdb_id,poster_path,poster_thumb,download_link,release_date,category,created_at")
+    .select(
+      "id,title,tmdb_id,poster_path,poster_thumb,download_link,release_date,category,created_at"
+    )
     .eq("category", category)
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -42,7 +44,7 @@ async function enrichRowsWithTMDB(rows: MediaItemRow[], mediaKind: "movie" | "tv
           id: r.id,
           download_link: dbDownload,
           release_date: r.release_date ?? "",
-          category: r.category, // ✅ keep category
+          category: r.category,
         } as EnrichedItem;
       }
 
@@ -52,7 +54,9 @@ async function enrichRowsWithTMDB(rows: MediaItemRow[], mediaKind: "movie" | "tv
           : `https://api.themoviedb.org/3/tv/${r.tmdb_id}`;
 
       try {
-        const res = await fetch(`${endpoint}?api_key=${process.env.TMDB_API_KEY}`, { cache: "no-store" });
+        const res = await fetch(`${endpoint}?api_key=${process.env.TMDB_API_KEY}`, {
+          cache: "no-store",
+        });
         if (!res.ok) {
           return {
             title: `${mediaKind === "movie" ? "Movie" : "Show"} ${r.tmdb_id}`,
@@ -61,7 +65,7 @@ async function enrichRowsWithTMDB(rows: MediaItemRow[], mediaKind: "movie" | "tv
             id: r.id,
             download_link: dbDownload,
             release_date: "",
-            category: r.category, // ✅ keep category
+            category: r.category,
           } as EnrichedItem;
         }
         const meta: TMDBMovie = await res.json();
@@ -70,7 +74,7 @@ async function enrichRowsWithTMDB(rows: MediaItemRow[], mediaKind: "movie" | "tv
           download_link: dbDownload,
           id: r.id,
           poster_thumb: r.poster_thumb ?? null,
-          category: r.category, // ✅ keep category
+          category: r.category,
         } as EnrichedItem;
       } catch {
         return {
@@ -80,7 +84,7 @@ async function enrichRowsWithTMDB(rows: MediaItemRow[], mediaKind: "movie" | "tv
           id: r.id,
           download_link: dbDownload,
           release_date: "",
-          category: r.category, // ✅ keep category
+          category: r.category,
         } as EnrichedItem;
       }
     })
@@ -123,7 +127,7 @@ export default async function HomePage() {
     id: s.id,
     download_link: s.download_link ?? "",
     release_date: s.release_date ?? "",
-    category: s.category, // ✅ keep category
+    category: s.category,
   })) as EnrichedItem[];
 
   const section = (title: string, category: string, items: EnrichedItem[]) => (
@@ -134,8 +138,8 @@ export default async function HomePage() {
       ) : (
         <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
           {items.map((m) => {
-            const key = String(m.id ?? m.imdb_id ?? m.title ?? Math.random().toString(36).slice(2, 9));
-            const titleText = m.title ?? `Untitled (${m.id ?? "?"})`;
+            const key = String(m.id); // ✅ simplified key
+            const titleText = m.title ?? `Untitled (${m.id})`;
             const year = m.release_date ? String(m.release_date).slice(0, 4) : "";
 
             const image =
@@ -152,7 +156,7 @@ export default async function HomePage() {
                 key={key}
                 id={m.id}
                 title={titleText}
-                category={m.category ?? ""} // ✅ now shows correct category
+                category={m.category ?? ""}
                 image={image}
                 downloadLink={m.download_link ?? ""}
                 releaseYear={year}

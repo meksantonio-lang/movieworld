@@ -1,4 +1,3 @@
-// src/app/kdrama/page.tsx
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
@@ -107,9 +106,9 @@ export default async function KdramaPage({ searchParams }: { searchParams: Promi
             {kdrama.map((m) => (
               <MediaCard
                 key={String(m.id)}
-                id={m.id} // ✅ required prop
+                id={m.id}
                 title={(m as TMDBTvShow).name ?? (m as TMDBMovie).title ?? `Untitled (${m.id})`}
-                category="kdrama" // ✅ keep category consistent
+                category="kdrama"
                 image={
                   m.poster_path
                     ? `https://image.tmdb.org/t/p/w500${m.poster_path}`

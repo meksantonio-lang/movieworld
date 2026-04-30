@@ -1,4 +1,3 @@
-// src/app/books/page.tsx
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
@@ -40,7 +39,7 @@ function mapBooks(rows: MediaItemRow[]): EnrichedBook[] {
     poster_path: r.poster_path ?? "/placeholder-poster.png",
     release_date: r.release_date ?? "",
     download_link: r.download_link ?? "",
-    author: r.author ?? r.details?.author ?? null, // ✅ capture author
+    author: r.author ?? r.details?.author ?? null,
   }));
 }
 
@@ -82,9 +81,10 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
                 key={String(b.id)}
                 id={b.id}
                 title={b.title}
-                category={b.author ?? "books"} // ✅ show author if available
+                category="books" // ✅ always "books" for routing
                 image={b.poster_path}
                 downloadLink={b.download_link}
+                author={b.author ?? ""}
                 releaseYear={b.release_date ? b.release_date.slice(0, 4) : ""}
               />
             ))}
