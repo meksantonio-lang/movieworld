@@ -1,4 +1,3 @@
-// src/app/music/page.tsx
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
@@ -21,7 +20,7 @@ async function fetchMusicRows(page = 1) {
   const offset = (page - 1) * PAGE_SIZE;
   const { data, error } = await supabase
     .from("media_items")
-    .select("id,title,poster_path,release_date,download_link,artist,created_at") // ✅ include artist column
+    .select("id,title,poster_path,release_date,download_link,artist,created_at")
     .eq("category", "music")
     .order("created_at", { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1);
@@ -40,20 +39,20 @@ function mapMusic(rows: MediaItemRow[]): EnrichedSong[] {
     poster_path: r.poster_path ?? "/placeholder-poster.png",
     release_date: r.release_date ?? "",
     download_link: r.download_link ?? "",
-    artist: (r as any).artist ?? null, // ✅ read from artist column
+    artist: (r as any).artist ?? null,
   }));
 }
 
-export default async function MusicPage({ searchParams }: { searchParams: Promise<Record<string, string | string[]>> }) {
-  const params = await searchParams;
+export default async function MusicPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[]>>;
+}) {
+  const params = await searchParams; // ✅ await first
 
   const page = Math.max(
     1,
-    Number(
-      Array.isArray(params?.page)
-        ? params.page[0]
-        : params.page ?? "1"
-    )
+    Number(Array.isArray(params?.page) ? params.page[0] : params.page ?? "1")
   );
 
   const { rows } = await fetchMusicRows(page);
@@ -79,16 +78,15 @@ export default async function MusicPage({ searchParams }: { searchParams: Promis
           <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {songs.map((s) => (
               <MediaCard
-  key={String(s.id)}
-  id={s.id}
-  title={s.title}
-  category="music" // ✅ force category to "music"
-  image={s.poster_path}
-  downloadLink={s.download_link}
-  releaseYear={s.release_date ? s.release_date.slice(0, 4) : ""}
-  artist={s.artist ?? ""} // ✅ pass artist separately if you want to show it
-/>
-
+                key={String(s.id)}
+                id={s.id}
+                title={s.title}
+                category="music"
+                image={s.poster_path}
+                downloadLink={s.download_link}
+                releaseYear={s.release_date ? s.release_date.slice(0, 4) : ""}
+                artist={s.artist ?? ""}
+              />
             ))}
           </div>
 

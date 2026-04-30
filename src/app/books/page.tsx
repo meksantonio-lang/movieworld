@@ -43,16 +43,16 @@ function mapBooks(rows: MediaItemRow[]): EnrichedBook[] {
   }));
 }
 
-export default async function BooksPage({ searchParams }: { searchParams: Promise<Record<string, string | string[]>> }) {
-  const params = await searchParams;
+export default async function BooksPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[]>>;
+}) {
+  const params = await searchParams; // ✅ await first
 
   const page = Math.max(
     1,
-    Number(
-      Array.isArray(params?.page)
-        ? params.page[0]
-        : params.page ?? "1"
-    )
+    Number(Array.isArray(params?.page) ? params.page[0] : params.page ?? "1")
   );
 
   const { rows } = await fetchBookRows(page);
@@ -81,7 +81,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
                 key={String(b.id)}
                 id={b.id}
                 title={b.title}
-                category="books" // ✅ always "books" for routing
+                category="books"
                 image={b.poster_path}
                 downloadLink={b.download_link}
                 author={b.author ?? ""}

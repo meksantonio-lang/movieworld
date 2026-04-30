@@ -1,4 +1,3 @@
-// src/app/anime/page.tsx
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
@@ -75,7 +74,11 @@ async function enrichAnime(rows: MediaItemRow[]) {
   );
 }
 
-export default async function AnimePage({ searchParams }: { searchParams: Promise<Record<string, string | string[]>> }) {
+export default async function AnimePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[]>>;
+}) {
   const params = await searchParams; // ✅ await first
 
   const page = Math.max(
@@ -108,7 +111,11 @@ export default async function AnimePage({ searchParams }: { searchParams: Promis
               <MediaCard
                 key={String(m.id)}
                 id={m.id}
-                title={(m as TMDBTvShow).name ?? (m as TMDBMovie).title ?? `Untitled (${m.id})`}
+                title={
+                  (m as TMDBTvShow).name ??
+                  (m as TMDBMovie).title ??
+                  `Untitled (${m.id})`
+                }
                 category="anime"
                 image={
                   m.poster_path
