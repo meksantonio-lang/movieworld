@@ -130,24 +130,84 @@ if (!session) {
     }
   }
 
-  // Spotify search helper (calls /api/autofill-spotify)
-  async function fetchFromSpotify(query: string) {
+  function SpotifySearch({ onSelect }: { onSelect: (track: any) => void }) {
+    const [query, setQuery] = useState("");
+    const [results, setResults] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+  async function handleSearch() {
+    setLoading(true);
+    setError("");
+    setResults([]);
+
     try {
       const resp = await fetch("/api/autofill-spotify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query }),
       });
-      if (!resp.ok) {
-        console.warn("Spotify proxy non-ok:", resp.status, await resp.text());
-        return null;
+      const data = await resp.json();
+
+      if (!resp.ok || data.error) {
+        setError(data.error || "Search failed");
+      } else {
+        setResults(data.tracks || []);
       }
-      return await resp.json();
     } catch (err) {
-      console.error("fetchFromSpotify proxy error:", err);
-      return null;
+      console.error("Spotify search error:", err);
+      setError("Internal error");
+    } finally {
+      setLoading(false);
     }
   }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          placeholder="Song title and artist"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="border px-3 py-2 rounded w-full"
+        />
+        <button
+          onClick={handleSearch}
+          className="bg-green-600 text-white px-4 py-2 rounded"
+        >
+          Search
+        </button>
+      </div>
+
+      {loading && <p>Searching Spotify…</p>}
+      {error && <p className="text-red-600">{error}</p>}
+
+      <ul className="space-y-2">
+        {results.map((track) => (
+          <li key={track.id} className="flex items-center gap-4 border p-2 rounded">
+            <img
+              src={track.cover_url}
+              alt={track.title}
+              className="w-12 h-12 object-cover rounded"
+            />
+            <div className="flex-1">
+              <p className="font-semibold">{track.title}</p>
+              <p className="text-sm text-gray-600">{track.artist}</p>
+              <p className="text-xs text-gray-500">{track.album}</p>
+            </div>
+            <button
+              onClick={() => onSelect(track)}
+              className="bg-blue-600 text-white px-3 py-1 rounded"
+            >
+              Select
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
   // OpenLibrary helper
   async function fetchFromOpenLibrary(title: string, author?: string) {
@@ -699,4 +759,54 @@ if (!session) {
 </div>
 </main>
 );
+}
+
+async function fetchFromSpotify(title: string) {
+  try {
+    const resp = await fetch("/api/autofill-spotify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: title }),
+    });
+
+    if (!resp.ok) {
+      console.warn("Spotify autofill proxy non-ok:", resp.status, await resp.text());
+      return null;
+    }
+
+    const data = await resp.json();
+    if (data.error) {
+      console.warn("Spotify autofill error:", data.error);
+      return null;
+    }
+
+    const track = Array.isArray(data.tracks)
+      ? data.tracks[0]
+      : data.track || null;
+
+    if (!track) {
+      return null;
+    }
+
+    return {
+      id: track.id,
+      title: track.title ?? track.name ?? "",
+      artist:
+        track.artist ??
+        (track.artists && Array.isArray(track.artists)
+          ? track.artists.map((a: any) => (typeof a === "string" ? a : a.name)).join(", ")
+          : "") ??
+        "",
+      album: track.album ?? track.album_name ?? "",
+      release_date:
+        track.release_date ?? track.album?.release_date ?? null,
+      cover_url:
+        track.cover_url ?? track.album?.images?.[0]?.url ?? null,
+      genre: track.genre ?? null,
+      release_year: track.release_year ?? null,
+    };
+  } catch (err) {
+    console.error("fetchFromSpotify error:", err);
+    return null;
+  }
 }

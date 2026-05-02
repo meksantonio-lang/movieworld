@@ -24,12 +24,17 @@ export async function POST(req: Request) {
     const tokenData = await tokenResp.json();
     const accessToken = tokenData.access_token;
     if (!accessToken) {
-      return NextResponse.json({ error: "Failed to get Spotify token" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to get Spotify token" },
+        { status: 500 }
+      );
     }
 
-    // Step 2: Search Spotify for track
+    // Step 2: Search Spotify for up to 5 tracks
     const searchResp = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`,
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+        query
+      )}&type=track&limit=5`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
@@ -40,20 +45,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No track found" }, { status: 404 });
     }
 
-    const track = searchData.tracks.items[0];
-
-    // Step 3: Return simplified metadata
-    return NextResponse.json({
+    // Step 3: Return simplified metadata for each match
+    const tracks = searchData.tracks.items.map((track: any) => ({
       id: track.id,
       title: track.name,
-      artist: track.artists[0]?.name || "",
+      artist: track.artists.map((a: any) => a.name).join(", "),
       album: track.album?.name || "",
       release_date: track.album?.release_date || "",
       cover_url: track.album?.images[0]?.url || "",
       genre: "", // Spotify doesn’t provide per-track genre
-    });
+    }));
+
+    return NextResponse.json({ tracks });
   } catch (err) {
     console.error("Spotify API error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
