@@ -1,17 +1,17 @@
-import "./globals.css";
+import "@/app/globals.css"; // ✅ fixed import path
 import Navbar from "@/components/Navbar";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 
 // This is what Google and Social Media bots read
 export const metadata = {
-  title: "MovieWorld 🌎 | Movies, Music & Books",
-  description: "Download high-quality movies, latest Hollywood, Nollywood, K-drama and Bollywood movies, Download trending Afrobeats, Hip-hop and Pop music, getbest-selling eBooks instantly with no sign-up required.",
-  keywords: ["Movies", "Afrobeats", "Downloads", "eBooks", "MovieWorld", "Free Content"],
+  title: "MovieWrld 🌍 | Movies, Music & Books",
+  description: "Download high-quality movies, latest Hollywood, Nollywood, K-drama and Bollywood movies, Download trending Afrobeats, Hip-hop and Pop music, get best-selling eBooks instantly with no sign-up required.",
+  keywords: ["Movies", "Afrobeats", "Downloads", "eBooks", "MovieWrld", "Free Content"],
   openGraph: {
-    title: "MediaHub - Your Digital Entertainment Hub",
+    title: "MovieWrld - Your Digital Entertainment Hub",
     description: "Stream and download your favorite media in one click. No registration, just instant access.",
     url: "https://your-domain.com", // Replace with your domain later
-    siteName: "MediaHub",
+    siteName: "MovieWrld",
     images: [
       {
         url: "/og-image.jpg", // You can add a preview image in your public folder later
@@ -24,7 +24,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "MediaHub | Instant Downloads",
+    title: "MovieWrld | Instant Downloads",
     description: "Download movies, books, and music for free.",
   },
 };

@@ -11,12 +11,13 @@ export default function Navbar() {
         {/* Branding */}
         <Link href="/" className="flex items-center gap-1 group">
           <span className="text-2xl font-black tracking-tighter text-white uppercase group-hover:text-purple-500 transition-colors">
-            MovieW<span className="inline-block animate-pulse">🌎</span>rld
+            M<span className="inline-block animate-pulse">🌍</span>viewrld
           </span>
         </Link>
 
         <div className="flex items-center gap-8">
-          <div className="hidden md:flex items-center gap-6">
+          {/* Categories now visible on mobile too */}
+          <div className="flex items-center gap-6 flex-wrap">
             <Link href="/" className="text-sm font-bold text-white hover:text-gray-300 transition-colors uppercase tracking-widest">
               Movies
             </Link>
