@@ -10,30 +10,37 @@ export default function Navbar() {
         
         {/* Branding */}
         <Link href="/" className="flex items-center gap-1 group">
-          <span className="text-xs sm:text-sm md:text-xl font-black tracking-tighter text-white uppercase group-hover:text-purple-500 transition-colors">
-            M<span className="inline-block animate-pulse">🌍</span>viewrld
+          {/* Mobile logo (stacked) */}
+          <span className="block md:hidden text-xs font-black tracking-tighter text-white uppercase group-hover:text-purple-500 transition-colors leading-tight">
+            Movie<br />
+            wuld <span className="inline-block animate-pulse">🌍</span>
+          </span>
+
+          {/* Desktop logo (inline) */}
+          <span className="hidden md:block text-xl font-black tracking-tighter text-white uppercase group-hover:text-purple-500 transition-colors">
+            Moviewrld <span className="inline-block animate-pulse">🌍</span>
           </span>
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3 md:gap-6">
           {/* Categories */}
           <div className="flex items-center gap-2 sm:gap-3 md:gap-6 flex-wrap">
-            <Link href="/" className="text-[9px] sm:text-xs md:text-sm font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase tracking-widest">
+            <Link href="/" className="text-[9px] sm:text-xs md:text-sm font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase tracking-tight">
               Movies
             </Link>
-            <Link href="/music" className="text-[9px] sm:text-xs md:text-sm font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase tracking-widest">
+            <Link href="/music" className="text-[9px] sm:text-xs md:text-sm font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase tracking-tight">
               Music
             </Link>
-            <Link href="/books" className="text-[9px] sm:text-xs md:text-sm font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase tracking-widest">
+            <Link href="/books" className="text-[9px] sm:text-xs md:text-sm font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase tracking-tight">
               Books
             </Link>
-            <Link href="/anime" className="text-[9px] sm:text-xs md:text-sm font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase tracking-widest">
+            <Link href="/anime" className="text-[9px] sm:text-xs md:text-sm font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase tracking-tight">
               Anime
             </Link>
-            <Link href="/adult" className="text-[9px] sm:text-xs md:text-sm font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase tracking-widest">
+            <Link href="/adult" className="text-[9px] sm:text-xs md:text-sm font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase tracking-tight">
               18+
             </Link>
-            <Link href="/kdrama" className="text-[9px] sm:text-xs md:text-sm font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase tracking-widest">
+            <Link href="/kdrama" className="text-[9px] sm:text-xs md:text-sm font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase tracking-tight">
               K-Drama
             </Link>
           </div>
