@@ -170,7 +170,7 @@ export default async function HomePage() {
 
   return (
     <main className="px-6 py-10">
-      <h1 className="text-3xl font-bold mb-6 text-purple-700">New on Movieworld</h1>
+      <h1 className="text-3xl font-bold mb-6 text-purple-700">New on Moviewrld</h1>
 
       {section("New Movies", "movies", movies)}
       {section("Trending Music", "music", songs)}
