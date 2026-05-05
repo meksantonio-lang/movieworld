@@ -13,7 +13,7 @@ export default function Navbar() {
           {/* Mobile logo (stacked) */}
           <span className="block md:hidden text-xs font-black tracking-tighter text-white uppercase group-hover:text-purple-500 transition-colors leading-tight">
             Movie<br />
-            wuld <span className="inline-block animate-pulse">🌍</span>
+            wrld <span className="inline-block animate-pulse">🌍</span>
           </span>
 
           {/* Desktop logo (inline) */}

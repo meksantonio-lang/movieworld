@@ -14,7 +14,7 @@ export const metadata = {
     siteName: "MovieWrld",
     images: [
       {
-        url: "/og-image.jpg", // You can add a preview image in your public folder later
+        url: "/moviewrld logo.png", // You can add a preview image in your public folder later
         width: 1200,
         height: 630,
       },
