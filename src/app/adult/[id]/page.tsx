@@ -2,12 +2,12 @@ import { supabase } from "@/lib/supabaseClient";
 import MediaDetailCard from "@/components/MediaDetailCard";
 
 export default async function AdultDetail({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params; // ✅ await first
+  const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 
   const { data: adult, error } = await supabase
     .from("media_items")
-    .select("*")
+    .select("id, title, poster_path, genre, release_year, author, artist, download_link, details")
     .eq("id", id)
     .eq("category", "adult")
     .single();
@@ -24,12 +24,13 @@ export default async function AdultDetail({ params }: { params: Promise<{ id: st
     <MediaDetailCard
       category="adult"
       title={adult.title ?? "Untitled"}
-      cover={adult.cover}
       poster_path={adult.poster_path}
       genre={adult.genre}
       release_year={adult.release_year}
-      overview={adult.details?.overview}
-      studio={adult.details?.studio}
+      author={adult.author}
+      artist={adult.artist}
+      // ✅ new plain-text details field
+      extra_details={adult.details}
       download_link={adult.download_link}
     />
   );

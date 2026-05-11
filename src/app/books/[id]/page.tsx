@@ -1,15 +1,14 @@
-// src/app/books/[id]/page.tsx
 import { supabase } from "@/lib/supabaseClient";
 import MediaDetailCard from "@/components/MediaDetailCard";
 
 export default async function BookDetail({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params; // ✅ await first
+  const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 
   // Fetch the book itself
   const { data: book, error } = await supabase
     .from("media_items")
-    .select("*")
+    .select("id, title, poster_path, genre, release_year, author, artist, download_link, details")
     .eq("id", id)
     .eq("category", "books")
     .single();
@@ -25,7 +24,7 @@ export default async function BookDetail({ params }: { params: Promise<{ id: str
   // Fetch chapters linked to this book
   const { data: chapters, error: chaptersError } = await supabase
     .from("media_items")
-    .select("*")
+    .select("id, episode_number, download_link")
     .eq("parent_id", id)
     .order("episode_number", { ascending: true }); // reuse episode_number as chapter_number
 
@@ -38,13 +37,13 @@ export default async function BookDetail({ params }: { params: Promise<{ id: str
       <MediaDetailCard
         category="books"
         title={book.title ?? "Untitled"}
-        cover={book.cover}
         poster_path={book.poster_path}
         genre={book.genre}
         release_year={book.release_year}
-        author={book.author ?? book.details?.author}
-        publisher={book.details?.publisher}
-        overview={book.details?.overview}
+        author={book.author}
+        artist={book.artist}
+        // ✅ new plain-text details field
+        extra_details={book.details}
         download_link={book.download_link}
       />
 

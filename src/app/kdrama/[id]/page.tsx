@@ -1,15 +1,14 @@
-// src/app/kdrama/[id]/page.tsx
 import { supabase } from "@/lib/supabaseClient";
 import MediaDetailCard from "@/components/MediaDetailCard";
 
 export default async function KdramaDetail({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params; // ✅ await first
+  const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 
-  // Fetch the kdrama/season itself
+  // Fetch the kdrama itself
   const { data: kdrama, error } = await supabase
     .from("media_items")
-    .select("*")
+    .select("id, title, poster_path, genre, release_year, author, artist, download_link, details")
     .eq("id", id)
     .eq("category", "kdrama")
     .single();
@@ -25,7 +24,7 @@ export default async function KdramaDetail({ params }: { params: Promise<{ id: s
   // Fetch episodes linked to this kdrama season
   const { data: episodes, error: episodesError } = await supabase
     .from("media_items")
-    .select("*")
+    .select("id, episode_number, download_link")
     .eq("parent_id", id)
     .order("episode_number", { ascending: true });
 
@@ -38,13 +37,13 @@ export default async function KdramaDetail({ params }: { params: Promise<{ id: s
       <MediaDetailCard
         category="kdrama"
         title={kdrama.title ?? "Untitled"}
-        cover={kdrama.cover}
         poster_path={kdrama.poster_path}
         genre={kdrama.genre}
         release_year={kdrama.release_year}
-        episodes={kdrama.details?.episodes}
-        studio={kdrama.details?.studio}
-        overview={kdrama.details?.overview}
+        author={kdrama.author}
+        artist={kdrama.artist}
+        // ✅ new plain-text details field
+        extra_details={kdrama.details}
         download_link={kdrama.download_link}
       />
 

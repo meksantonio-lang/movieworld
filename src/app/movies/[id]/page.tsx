@@ -1,15 +1,14 @@
-// src/app/movies/[id]/page.tsx
 import { supabase } from "@/lib/supabaseClient";
 import MediaDetailCard from "@/components/MediaDetailCard";
 
 export default async function MovieDetail({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params; // ✅ await first
+  const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 
-  // Fetch the movie/season itself
+  // Fetch the movie itself
   const { data: movie, error } = await supabase
     .from("media_items")
-    .select("*")
+    .select("id, title, poster_path, genre, release_year, artist, author, download_link, details")
     .eq("id", id)
     .eq("category", "movies")
     .single();
@@ -25,7 +24,7 @@ export default async function MovieDetail({ params }: { params: Promise<{ id: st
   // Fetch episodes linked to this movie/season
   const { data: episodes, error: episodesError } = await supabase
     .from("media_items")
-    .select("*")
+    .select("id, episode_number, download_link")
     .eq("parent_id", id)
     .order("episode_number", { ascending: true });
 
@@ -38,17 +37,13 @@ export default async function MovieDetail({ params }: { params: Promise<{ id: st
       <MediaDetailCard
         category="movies"
         title={movie.title ?? "Untitled"}
-        cover={movie.cover}
         poster_path={movie.poster_path}
         genre={movie.genre}
         release_year={movie.release_year}
-        artist={movie.artist ?? movie.details?.artist}
-        author={movie.author ?? movie.details?.author}
-        runtime={movie.details?.runtime}
-        episodes={movie.details?.episodes}
-        studio={movie.details?.studio}
-        publisher={movie.details?.publisher}
-        overview={movie.details?.overview}
+        artist={movie.artist}
+        author={movie.author}
+        // ✅ new plain-text details field
+        extra_details={movie.details}
         download_link={movie.download_link}
       />
 

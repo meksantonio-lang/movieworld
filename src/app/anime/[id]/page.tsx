@@ -1,15 +1,14 @@
-// src/app/anime/[id]/page.tsx
 import { supabase } from "@/lib/supabaseClient";
 import MediaDetailCard from "@/components/MediaDetailCard";
 
 export default async function AnimeDetail({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params; // ✅ await first
+  const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 
-  // Fetch the anime/season itself
+  // Fetch the anime itself
   const { data: anime, error } = await supabase
     .from("media_items")
-    .select("*")
+    .select("id, title, poster_path, genre, release_year, author, artist, download_link, details")
     .eq("id", id)
     .eq("category", "anime")
     .single();
@@ -25,7 +24,7 @@ export default async function AnimeDetail({ params }: { params: Promise<{ id: st
   // Fetch episodes linked to this anime season
   const { data: episodes, error: episodesError } = await supabase
     .from("media_items")
-    .select("*")
+    .select("id, episode_number, download_link")
     .eq("parent_id", id)
     .order("episode_number", { ascending: true });
 
@@ -38,13 +37,13 @@ export default async function AnimeDetail({ params }: { params: Promise<{ id: st
       <MediaDetailCard
         category="anime"
         title={anime.title ?? "Untitled"}
-        cover={anime.cover}
         poster_path={anime.poster_path}
         genre={anime.genre}
         release_year={anime.release_year}
-        episodes={anime.details?.episodes}
-        studio={anime.details?.studio}
-        overview={anime.details?.overview}
+        author={anime.author}
+        artist={anime.artist}
+        // ✅ new plain-text details field
+        extra_details={anime.details}
         download_link={anime.download_link}
       />
 
