@@ -12,8 +12,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-1 group">
           {/* Mobile logo */}
           <span className="block md:hidden text-xs font-black tracking-tighter text-white uppercase group-hover:text-purple-500 transition-colors leading-tight">
-            Movie<br />
-            wrld <span className="inline-block animate-pulse">🌍</span>
+            Moviewrld <span className="inline-block animate-pulse">🌍</span>
           </span>
 
           {/* Desktop logo */}
@@ -45,7 +44,7 @@ export default function Navbar() {
         </div>
 
         {/* Search */}
-        <div className="w-16 sm:w-28 md:w-64">
+        <div className="w-full sm:w-1/2 md:w-64 max-w-xs ml-3">
           <GlobalSearch />
         </div>
       </div>
