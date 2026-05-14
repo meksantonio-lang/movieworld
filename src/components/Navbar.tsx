@@ -21,35 +21,35 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop Categories */}
-        <div className="hidden md:flex items-center gap-6 flex-1 justify-center">
-          <Link href="/" className="text-xl font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase">
-            Movies
-          </Link>
-          <Link href="/music" className="text-xl font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase">
-            Music
-          </Link>
-          <Link href="/books" className="text-xl font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase">
-            Books
-          </Link>
-          <Link href="/anime" className="text-xl font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase">
-            Anime
-          </Link>
-          <Link href="/adult" className="text-xl font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase">
-            18+
-          </Link>
-          <Link href="/kdrama" className="text-xl font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase">
-            K-Drama
-          </Link>
-        </div>
-
-        {/* Search */}
-        <div className="w-full sm:w-1/2 md:w-64 max-w-xs ml-3">
+        {/* Search (always aligned to the right) */}
+        <div className="w-full sm:w-1/2 md:w-64 max-w-xs flex justify-end">
           <GlobalSearch />
         </div>
       </div>
 
-      {/* Mobile Categories (always visible, stacked in two rows) */}
+      {/* Desktop Categories */}
+      <div className="hidden md:flex items-center gap-6 justify-center bg-purple-800 py-2">
+        <Link href="/" className="text-xl font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase">
+          Movies
+        </Link>
+        <Link href="/music" className="text-xl font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase">
+          Music
+        </Link>
+        <Link href="/books" className="text-xl font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase">
+          Books
+        </Link>
+        <Link href="/anime" className="text-xl font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase">
+          Anime
+        </Link>
+        <Link href="/adult" className="text-xl font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase">
+          18+
+        </Link>
+        <Link href="/kdrama" className="text-xl font-bold text-white hover:text-gray-300 hover:underline transition-colors uppercase">
+          K-Drama
+        </Link>
+      </div>
+
+      {/* Mobile Categories (stacked in two rows) */}
       <div className="md:hidden bg-purple-800 px-4 py-3 grid grid-cols-3 gap-3 text-center">
         <Link href="/" className="text-lg font-bold text-white hover:text-gray-300">Movies</Link>
         <Link href="/music" className="text-lg font-bold text-white hover:text-gray-300">Music</Link>
