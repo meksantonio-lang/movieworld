@@ -1,4 +1,3 @@
-// src/app/page.tsx
 export const dynamic = "force-dynamic";
 
 import { supabase } from "@/lib/supabaseClient";
@@ -11,7 +10,7 @@ type EnrichedItem = TMDBMovie & {
   id?: number | string;
   imdb_id?: string | null;
   poster_thumb?: string | null;
-  category?: string; // ✅ preserve category
+  category?: string;
 };
 
 async function fetchCategoryRows(category: string, limit = 8) {
@@ -38,13 +37,13 @@ async function enrichRowsWithTMDB(rows: MediaItemRow[], mediaKind: "movie" | "tv
 
       if (!r.tmdb_id) {
         return {
-          title: r.title ?? `Item ${r.id}`,
-          poster_path: r.poster_path ?? "",
-          poster_thumb: r.poster_thumb ?? null,
           id: r.id,
+          category: r.category,
           download_link: dbDownload,
           release_date: r.release_date ?? "",
-          category: r.category,
+          title: r.title ?? `Untitled (${r.id})`,
+          poster_path: r.poster_path ?? "",
+          poster_thumb: r.poster_thumb ?? null,
         } as EnrichedItem;
       }
 
@@ -59,32 +58,37 @@ async function enrichRowsWithTMDB(rows: MediaItemRow[], mediaKind: "movie" | "tv
         });
         if (!res.ok) {
           return {
-            title: `${mediaKind === "movie" ? "Movie" : "Show"} ${r.tmdb_id}`,
-            poster_path: "",
-            poster_thumb: r.poster_thumb ?? null,
             id: r.id,
-            download_link: dbDownload,
-            release_date: "",
             category: r.category,
+            download_link: dbDownload,
+            release_date: r.release_date ?? "",
+            title: r.title ?? `Untitled (${r.id})`,
+            poster_path: r.poster_path ?? "",
+            poster_thumb: r.poster_thumb ?? null,
           } as EnrichedItem;
         }
+
         const meta: TMDBMovie = await res.json();
         return {
-          ...meta,
-          download_link: dbDownload,
           id: r.id,
-          poster_thumb: r.poster_thumb ?? null,
           category: r.category,
+          download_link: dbDownload,
+          release_date: r.release_date ?? meta.release_date ?? "",
+          // ✅ Supabase title wins, fallback to TMDB
+          title: r.title ?? meta.title ?? `Untitled (${r.id})`,
+          // ✅ Supabase poster wins, fallback to TMDB
+          poster_path: r.poster_path ?? meta.poster_path ?? "",
+          poster_thumb: r.poster_thumb ?? null,
         } as EnrichedItem;
       } catch {
         return {
-          title: `${mediaKind === "movie" ? "Movie" : "Show"} ${r.tmdb_id}`,
-          poster_path: "",
-          poster_thumb: r.poster_thumb ?? null,
           id: r.id,
-          download_link: dbDownload,
-          release_date: "",
           category: r.category,
+          download_link: dbDownload,
+          release_date: r.release_date ?? "",
+          title: r.title ?? `Untitled (${r.id})`,
+          poster_path: r.poster_path ?? "",
+          poster_thumb: r.poster_thumb ?? null,
         } as EnrichedItem;
       }
     })
@@ -121,13 +125,13 @@ export default async function HomePage() {
   ]);
 
   const songs = (musicRows || []).map((s) => ({
-    title: s.title ?? `Song ${s.id}`,
-    poster_path: s.poster_path ?? "",
-    poster_thumb: s.poster_thumb ?? null,
     id: s.id,
+    category: s.category,
     download_link: s.download_link ?? "",
     release_date: s.release_date ?? "",
-    category: s.category,
+    title: s.title ?? `Untitled (${s.id})`,
+    poster_path: s.poster_path ?? "",
+    poster_thumb: s.poster_thumb ?? null,
   })) as EnrichedItem[];
 
   const section = (title: string, category: string, items: EnrichedItem[]) => (
@@ -138,7 +142,7 @@ export default async function HomePage() {
       ) : (
         <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
           {items.map((m) => {
-            const key = String(m.id); // ✅ simplified key
+            const key = String(m.id);
             const titleText = m.title ?? `Untitled (${m.id})`;
             const year = m.release_date ? String(m.release_date).slice(0, 4) : "";
 
