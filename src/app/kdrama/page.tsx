@@ -3,11 +3,14 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import MediaCard from "@/components/MediaCard";
-import { MediaItemRow, TMDBMovie, TMDBTvShow } from "@/types/media";
+import { MediaItemRow, TMDBTvShow } from "@/types/media";
 
-type EnrichedItem = (TMDBMovie | TMDBTvShow) & {
-  download_link?: string | null;
+type EnrichedItem = {
   id: number | string;
+  title: string;
+  poster_path: string;
+  download_link?: string | null;
+  release_date?: string;
 };
 
 const PAGE_SIZE = 24;
@@ -16,7 +19,7 @@ async function fetchKdramaRows(page = 1) {
   const offset = (page - 1) * PAGE_SIZE;
   const { data, error } = await supabase
     .from("media_items")
-    .select("*")
+    .select("id,title,poster_path,poster_thumb,download_link,release_date,tmdb_id,created_at")
     .eq("category", "kdrama")
     .order("created_at", { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1);
@@ -35,11 +38,11 @@ async function enrichKdrama(rows: MediaItemRow[]) {
 
       if (!r.tmdb_id || Number(r.tmdb_id) === 0) {
         return {
-          title: r.title ?? r.name ?? `Show ${r.id}`,
-          poster_path: r.poster_path ?? "",
           id: r.id,
+          title: r.title ?? `Untitled (${r.id})`,
+          poster_path: r.poster_path ?? r.poster_thumb ?? "",
           download_link: dbDownload,
-          release_date: r.release_date ?? r.first_air_date ?? "",
+          release_date: r.release_date ?? "",
         } as EnrichedItem;
       }
 
@@ -51,23 +54,32 @@ async function enrichKdrama(rows: MediaItemRow[]) {
         if (!res.ok) {
           console.warn(`TMDB tv fetch failed for id ${r.tmdb_id}:`, res.status);
           return {
-            title: `Show ${r.tmdb_id}`,
-            poster_path: "",
             id: r.id,
+            title: r.title ?? `Untitled (${r.id})`,
+            poster_path: r.poster_path ?? r.poster_thumb ?? "",
             download_link: dbDownload,
-            release_date: "",
+            release_date: r.release_date ?? "",
           } as EnrichedItem;
         }
+
         const meta: TMDBTvShow = await res.json();
-        return { ...meta, download_link: dbDownload, id: r.id } as EnrichedItem;
+        return {
+          id: r.id,
+          // ✅ Supabase title wins, fallback to TMDB
+          title: r.title ?? meta.name ?? `Untitled (${r.id})`,
+          // ✅ Supabase poster wins, fallback to TMDB
+          poster_path: r.poster_path ?? r.poster_thumb ?? meta.poster_path ?? "",
+          download_link: dbDownload,
+          release_date: r.release_date ?? meta.first_air_date ?? "",
+        } as EnrichedItem;
       } catch (err) {
         console.error("TMDB fetch error:", err);
         return {
-          title: `Show ${r.tmdb_id}`,
-          poster_path: "",
           id: r.id,
+          title: r.title ?? `Untitled (${r.id})`,
+          poster_path: r.poster_path ?? r.poster_thumb ?? "",
           download_link: dbDownload,
-          release_date: "",
+          release_date: r.release_date ?? "",
         } as EnrichedItem;
       }
     })
@@ -79,15 +91,14 @@ export default async function KdramaPage({
 }: {
   searchParams: Promise<Record<string, string | string[]>>;
 }) {
-  const params = await searchParams; // ✅ await first
-
+  const params = await searchParams;
   const page = Math.max(
     1,
     Number(Array.isArray(params?.page) ? params.page[0] : params.page ?? "1")
   );
 
   const { rows } = await fetchKdramaRows(page);
-  const kdrama = await enrichKdrama(rows);
+  const kdramas = await enrichKdrama(rows);
 
   const hasMore = (rows?.length ?? 0) === PAGE_SIZE;
   const nextPage = page + 1;
@@ -96,36 +107,32 @@ export default async function KdramaPage({
   return (
     <main className="px-6 py-10">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-purple-700">All Kdrama</h1>
+        <h1 className="text-3xl font-bold text-purple-700">All K‑Drama</h1>
         <Link href="/" className="text-sm text-gray-600 hover:underline">
           ← Back to Home
         </Link>
       </div>
 
-      {kdrama.length === 0 ? (
-        <p className="text-sm text-gray-500">No kdrama found.</p>
+      {kdramas.length === 0 ? (
+        <p className="text-sm text-gray-500">No K‑Drama found.</p>
       ) : (
         <>
           <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {kdrama.map((m) => (
+            {kdramas.map((m) => (
               <MediaCard
                 key={String(m.id)}
                 id={m.id}
-                title={(m as TMDBTvShow).name ?? (m as TMDBMovie).title ?? `Untitled (${m.id})`}
+                title={m.title ?? `Untitled (${m.id})`}
                 category="kdrama"
                 image={
-                  m.poster_path
-                    ? `https://image.tmdb.org/t/p/w500${m.poster_path}`
+                  m.poster_path && String(m.poster_path).trim() !== ""
+                    ? String(m.poster_path).startsWith("http")
+                      ? String(m.poster_path)
+                      : `https://image.tmdb.org/t/p/w500${m.poster_path}`
                     : "/placeholder-poster.png"
                 }
                 downloadLink={m.download_link ?? ""}
-                releaseYear={
-                  (m as TMDBTvShow).first_air_date
-                    ? (m as TMDBTvShow).first_air_date.slice(0, 4)
-                    : (m as TMDBMovie).release_date
-                    ? (m as TMDBMovie).release_date.slice(0, 4)
-                    : ""
-                }
+                releaseYear={m.release_date ? m.release_date.slice(0, 4) : ""}
               />
             ))}
           </div>

@@ -1,3 +1,4 @@
+// src/app/api/autofill-spotify/route.ts
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -45,18 +46,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No track found" }, { status: 404 });
     }
 
-    // Step 3: Return simplified metadata for each match
-    const tracks = searchData.tracks.items.map((track: any) => ({
-      id: track.id,
+    // Step 3: Normalize results into consistent shape
+    const results = searchData.tracks.items.map((track: any) => ({
       title: track.name,
       artist: track.artists.map((a: any) => a.name).join(", "),
       album: track.album?.name || "",
-      release_date: track.album?.release_date || "",
+      release_year: track.album?.release_date
+        ? Number(String(track.album.release_date).split("-")[0])
+        : null,
       cover_url: track.album?.images[0]?.url || "",
       genre: "", // Spotify doesn’t provide per-track genre
+      download_url: `https://open.spotify.com/track/${track.id}`,
     }));
 
-    return NextResponse.json({ tracks });
+    return NextResponse.json({ results });
   } catch (err) {
     console.error("Spotify API error:", err);
     return NextResponse.json(
