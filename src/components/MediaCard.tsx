@@ -1,4 +1,3 @@
-// src/components/MediaCard.tsx
 import Link from "next/link";
 import Image from "next/image";
 
@@ -6,11 +5,12 @@ export interface MediaCardProps {
   id: string | number;
   title: string;
   category: string;
-  image: string;
+  image?: string;        // ✅ optional for adult
+  cover_url?: string;    // ✅ optional for TMDB/Spotify/Books
   downloadLink: string;
   author?: string;
   releaseYear?: string | number | null;
-   artist?: string; // ✅ add this line
+  artist?: string;
 }
 
 export default function MediaCard({
@@ -18,19 +18,22 @@ export default function MediaCard({
   title,
   category,
   image,
+  cover_url,
   downloadLink,
   author,
   releaseYear,
   artist,
 }: MediaCardProps) {
-  const isExternal = image?.startsWith("http");
+  // ✅ Prefer image if provided (adult), fallback to cover_url (other categories)
+  const displayImage = image || cover_url || "/placeholder-poster.png";
+  const isExternal = displayImage?.startsWith("http");
 
   return (
     <div className="border rounded-lg shadow-md overflow-hidden">
       <Link href={`/${category}/${id}`} className="block">
         {isExternal ? (
           <img
-            src={image}
+            src={displayImage}
             alt={title}
             className="w-full h-auto"
             width={300}
@@ -38,7 +41,7 @@ export default function MediaCard({
           />
         ) : (
           <Image
-            src={image}
+            src={displayImage}
             alt={title}
             width={300}
             height={450}

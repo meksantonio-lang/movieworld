@@ -13,43 +13,43 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         query: `
-          query SearchScenes($search: String!) {
-            searchScene(search: $search) {
-              edges {
-                node {
+          query SearchScene($term: String!) {
+            searchScene(term: $term) {
+              id
+              title
+              date
+              urls { url }          # ✅ sub‑selection
+              images { url }        # ✅ use images instead of poster
+              tags { name }
+              performers {
+                performer {
                   id
-                  title
-                  date
-                  url
-                  tags { name }
-                  performers { name }
-                  studio { name }
-                  images { url }
+                  name
                 }
               }
             }
           }
         `,
-        variables: { search: query },
+        variables: { term: query }, // ✅ correct argument name
       }),
     });
 
     const data = await resp.json();
+    console.log("TPDB raw response:", JSON.stringify(data, null, 2));
 
-    const results =
-      data?.data?.searchScene?.edges?.map((edge: any) => ({
-        title: edge.node.title,
-        release_year: edge.node.date
-          ? Number(String(edge.node.date).split("-")[0])
-          : null,
-        cover_url: edge.node.images?.[0]?.url || "",
-        genre: edge.node.tags?.map((t: any) => t.name).join(", ") || "",
-        download_url: edge.node.url,
-        metadata: {
-          performers: edge.node.performers?.map((p: any) => p.name) || [],
-          studio: edge.node.studio?.name || "",
-        },
-      })) || [];
+    const scenes = data?.data?.searchScene || [];
+
+    const results = scenes.map((scene: any) => ({
+      id: scene.id,
+      title: scene.title,
+      category: "adult",
+      cover_url: scene.images?.[0]?.url || "/placeholder-poster.png",
+      image: scene.images?.[0]?.url || "/placeholder-poster.png",
+      download_url: scene.urls?.[0]?.url || "", // ✅ pick first URL object
+      release_year: scene.date ? String(scene.date).slice(0, 4) : null,
+      genre: scene.tags?.map((t: any) => t.name).join(", ") || "",
+      artist: scene.performers?.map((p: any) => p.performer?.name).join(", ") || "",
+    }));
 
     return NextResponse.json({ results });
   } catch (error: any) {
@@ -60,4 +60,3 @@ export async function POST(req: Request) {
     );
   }
 }
-

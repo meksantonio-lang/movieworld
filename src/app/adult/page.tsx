@@ -5,16 +5,24 @@ import { supabase } from "@/lib/supabaseClient";
 import MediaCard from "@/components/MediaCard";
 import { MediaItemRow } from "@/types/media";
 
+type EnrichedItem = {
+  id: number | string;
+  title: string;
+  poster_path: string;
+  download_link?: string | null;
+  release_date?: string;
+};
+
 const PAGE_SIZE = 24;
 
 async function fetchAdultRows(page = 1) {
-  const offset = (page - 1) * PAGE_SIZE;
-  const { data, error } = await supabase
-    .from("media_items")
-    .select("*")
-    .eq("category", "adult")
-    .order("created_at", { ascending: false })
-    .range(offset, offset + PAGE_SIZE - 1);
+   const offset = (page - 1) * PAGE_SIZE;
+    const { data, error } = await supabase
+      .from("media_items")
+      .select("id,title,poster_path,poster_thumb,download_link,release_date,tmdb_id,created_at")
+      .eq("category", "adult")
+      .order("created_at", { ascending: false })
+      .range(offset, offset + PAGE_SIZE - 1);
 
   if (error) {
     console.error("Supabase error fetching adult:", error);
@@ -24,14 +32,24 @@ async function fetchAdultRows(page = 1) {
 }
 
 function mapAdult(rows: MediaItemRow[]) {
-  return rows.map((m) => ({
-    id: m.id,
-    title: m.title || "Adult Content",
-    image: m.cover || "/placeholder.jpg",
-    download_link: m.download_link ?? "",
-    author: m.author ?? "",
-    releaseYear: m.release_year ? String(m.release_year) : "",
-  }));
+  return rows.map((r) => {
+    const download = (r as any).download_link ?? "";
+    const poster = r.poster_path ?? r.poster_thumb ?? "";
+    const release = r.release_date ?? "";
+    const releaseYear = release ? new Date(release).getFullYear() : undefined;
+
+    return {
+      id: r.id,
+      title: r.title ?? `Untitled (${r.id})`,
+      poster_path: poster,
+      download_link: download,
+      release_date: release,
+      // add convenience fields used by MediaCard
+      image: poster,
+      author: undefined,
+      releaseYear,
+    } as unknown as EnrichedItem & { image?: string; author?: string; releaseYear?: number };
+  });
 }
 
 export default async function AdultPage({
@@ -74,7 +92,7 @@ export default async function AdultPage({
                 title={m.title}
                 category="adult"
                 image={m.image}
-                downloadLink={m.download_link}
+                downloadLink={m.download_link ?? ""}
                 author={m.author}
                 releaseYear={m.releaseYear}
               />
