@@ -1,7 +1,49 @@
+import { Metadata } from "next";
 import { supabase } from "@/lib/supabaseClient";
 import MediaDetailCard from "@/components/MediaDetailCard";
 
-export default async function MusicDetail({ params }: { params: Promise<{ id: string }> }) {
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+// ✅ Generates SEO Metadata for Google Search
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params;
+  const id = Number(resolvedParams.id);
+
+  // Fetch only the fields needed for SEO
+  const { data: music } = await supabase
+    .from("media_items")
+    .select("title, artist, details")
+    .eq("id", id)
+    .eq("category", "music")
+    .single();
+
+  if (!music) {
+    return {
+      title: "Music Not Found | MovieWrld",
+    };
+  }
+
+  const musicTitle = music.title ?? "Untitled Track";
+  const artistString = music.artist ? ` by ${music.artist}` : "";
+
+  return {
+    title: `${musicTitle}${artistString} - Download MP3 | MovieWrld`,
+    description: music.details 
+      ? music.details.substring(0, 160) // Keep description under Google's 160 char limit
+      : `Download and stream ${musicTitle}${artistString} on MovieWrld.`,
+    keywords: [
+      `${musicTitle} mp3 download`,
+      `download ${musicTitle} audio`,
+      `${musicTitle}${artistString} free download`,
+      `${musicTitle} song download`,
+      `latest music download`
+    ],
+  };
+}
+
+export default async function MusicDetail({ params }: Props) {
   const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 

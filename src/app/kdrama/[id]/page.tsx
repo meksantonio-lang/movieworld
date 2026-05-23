@@ -1,7 +1,48 @@
+import { Metadata } from "next";
 import { supabase } from "@/lib/supabaseClient";
 import MediaDetailCard from "@/components/MediaDetailCard";
 
-export default async function KdramaDetail({ params }: { params: Promise<{ id: string }> }) {
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+// ✅ Generates SEO Metadata for Google Search
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params;
+  const id = Number(resolvedParams.id);
+
+  // Fetch only the fields needed for SEO
+  const { data: kdrama } = await supabase
+    .from("media_items")
+    .select("title, details")
+    .eq("id", id)
+    .eq("category", "kdrama")
+    .single();
+
+  if (!kdrama) {
+    return {
+      title: "K-Drama Not Found | MovieWrld",
+    };
+  }
+
+  const kdramaTitle = kdrama.title ?? "Untitled K-Drama";
+
+  return {
+    title: `${kdramaTitle} K-Drama - Download & Stream | MovieWrld`,
+    description: kdrama.details 
+      ? kdrama.details.substring(0, 160) // Keep description under Google's 160 char limit
+      : `Download and stream ${kdramaTitle} K-Drama episodes on MovieWrld.`,
+    keywords: [
+      `${kdramaTitle} kdrama download`,
+      `download ${kdramaTitle} episodes`,
+      `${kdramaTitle} korean drama free download`,
+      `${kdramaTitle} eng sub download`,
+      `${kdramaTitle} full season download`
+    ],
+  };
+}
+
+export default async function KdramaDetail({ params }: Props) {
   const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 

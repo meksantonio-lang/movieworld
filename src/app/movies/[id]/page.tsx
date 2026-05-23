@@ -1,7 +1,48 @@
+import { Metadata } from "next";
 import { supabase } from "@/lib/supabaseClient";
 import MediaDetailCard from "@/components/MediaDetailCard";
 
-export default async function MovieDetail({ params }: { params: Promise<{ id: string }> }) {
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+// ✅ Generates SEO Metadata for Google Search
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params;
+  const id = Number(resolvedParams.id);
+
+  // Fetch only the fields needed for SEO to keep it fast
+  const { data: movie } = await supabase
+    .from("media_items")
+    .select("title, details")
+    .eq("id", id)
+    .eq("category", "movies")
+    .single();
+
+  if (!movie) {
+    return {
+      title: "Movie Not Found | MovieWrld",
+    };
+  }
+
+  const movieTitle = movie.title ?? "Untitled Movie";
+
+  return {
+    title: `${movieTitle} - Download & Stream | MovieWrld`,
+    description: movie.details 
+      ? movie.details.substring(0, 160) // Keep description under Google's 160 char limit
+      : `Download and stream ${movieTitle} on MovieWrld.`,
+    keywords: [
+      `${movieTitle} download`,
+      `download ${movieTitle}`,
+      `${movieTitle} free download`,
+      `${movieTitle} full movie download`,
+      `${movieTitle} mp4 download`
+    ],
+  };
+}
+
+export default async function MovieDetail({ params }: Props) {
   const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 

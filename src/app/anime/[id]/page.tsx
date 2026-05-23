@@ -1,7 +1,48 @@
+import { Metadata } from "next";
 import { supabase } from "@/lib/supabaseClient";
 import MediaDetailCard from "@/components/MediaDetailCard";
 
-export default async function AnimeDetail({ params }: { params: Promise<{ id: string }> }) {
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+// ✅ Generates SEO Metadata for Google Search
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params;
+  const id = Number(resolvedParams.id);
+
+  // Fetch only the fields needed for SEO
+  const { data: anime } = await supabase
+    .from("media_items")
+    .select("title, details")
+    .eq("id", id)
+    .eq("category", "anime")
+    .single();
+
+  if (!anime) {
+    return {
+      title: "Anime Not Found | MovieWrld",
+    };
+  }
+
+  const animeTitle = anime.title ?? "Untitled Anime";
+
+  return {
+    title: `${animeTitle} Anime - Download & Stream | MovieWrld`,
+    description: anime.details 
+      ? anime.details.substring(0, 160) // Keep description under Google's 160 char limit
+      : `Download and stream ${animeTitle} anime episodes on MovieWrld.`,
+    keywords: [
+      `${animeTitle} anime download`,
+      `download ${animeTitle} episodes`,
+      `${animeTitle} free download`,
+      `${animeTitle} sub dub download`,
+      `${animeTitle} full season download`
+    ],
+  };
+}
+
+export default async function AnimeDetail({ params }: Props) {
   const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 

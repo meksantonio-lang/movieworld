@@ -1,7 +1,49 @@
+import { Metadata } from "next";
 import { supabase } from "@/lib/supabaseClient";
 import MediaDetailCard from "@/components/MediaDetailCard";
 
-export default async function BookDetail({ params }: { params: Promise<{ id: string }> }) {
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+// ✅ Generates SEO Metadata for Google Search
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params;
+  const id = Number(resolvedParams.id);
+
+  // Fetch only the fields needed for SEO
+  const { data: book } = await supabase
+    .from("media_items")
+    .select("title, author, details")
+    .eq("id", id)
+    .eq("category", "books")
+    .single();
+
+  if (!book) {
+    return {
+      title: "Book Not Found | MovieWrld",
+    };
+  }
+
+  const bookTitle = book.title ?? "Untitled Book";
+  const authorString = book.author ? ` by ${book.author}` : "";
+
+  return {
+    title: `${bookTitle}${authorString} - Download PDF & EPUB | MovieWrld`,
+    description: book.details 
+      ? book.details.substring(0, 160) // Keep description under Google's 160 char limit
+      : `Download and read ${bookTitle}${authorString} on MovieWrld.`,
+    keywords: [
+      `${bookTitle} pdf download`,
+      `download ${bookTitle} ebook`,
+      `${bookTitle} epub free download`,
+      `${bookTitle}${authorString} download`,
+      `read ${bookTitle} online free`
+    ],
+  };
+}
+
+export default async function BookDetail({ params }: Props) {
   const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 
