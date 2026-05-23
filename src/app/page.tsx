@@ -143,7 +143,13 @@ export default async function HomePage() {
         <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
           {items.map((m) => {
             const key = String(m.id);
-            const titleText = m.title ?? `Untitled (${m.id})`;
+            
+            // ✅ Clean up the title for display on the main page cards
+            // This takes everything before the first "(" and trims extra space
+            const displayTitle = m.title 
+              ? m.title.split("(")[0].trim() 
+              : `Untitled (${m.id})`;
+              
             const year = m.release_date ? String(m.release_date).slice(0, 4) : "";
 
             const image =
@@ -159,7 +165,7 @@ export default async function HomePage() {
               <MediaCard
                 key={key}
                 id={m.id}
-                title={titleText}
+                title={displayTitle} // ✅ Pass the cleaned title to the component
                 category={m.category ?? ""}
                 image={image}
                 downloadLink={m.download_link ?? ""}
