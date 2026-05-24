@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     siteName: "MovieWrld",
     images: [
       {
-        url: "https://moviewrld.com/favicon.ico", // Consider changing to a .png or .jpg later
+        url: "https://moviewrld.com/Logo.png", // Consider changing to a .png or .jpg later
         width: 512,
         height: 512,
       },
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MovieWrld | Instant Downloads",
     description: "Download movies, books, and music for free.",
-    images: ["https://moviewrld.com/favicon.ico"],
+    images: ["https://moviewrld.com/Logo.png"],
   },
 };
 
@@ -56,7 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               "@context": "https://schema.org",
               "@type": "Organization",
               "url": "https://moviewrld.com",
-              "logo": "https://moviewrld.com/favicon.ico",
+              "logo": "https://moviewrld.com/Logo.png",
             }),
           }}
         />
