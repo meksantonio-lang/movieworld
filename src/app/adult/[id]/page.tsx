@@ -46,9 +46,10 @@ export default async function AdultDetail({ params }: Props) {
   const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 
+  // ✅ Added cover_url to the select query
   const { data: adult, error } = await supabase
     .from("media_items")
-    .select("id, title, poster_path, genre, release_year, author, artist, download_link, details")
+    .select("id, title, poster_path, genre, release_year, author, artist, download_link, details, cover_url")
     .eq("id", id)
     .eq("category", "adult")
     .single();
@@ -61,18 +62,47 @@ export default async function AdultDetail({ params }: Props) {
     return <div>No adult item found for id {id}</div>;
   }
 
+  // --- START OF SCHEMA GENERATION ---
+  
+  const cleanTitle = adult.title ?? "Untitled Content";
+  const genreArray = adult.genre ? adult.genre.split(",") : ["Adult"];
+  const baseUrl = "https://moviewrld.com"; 
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    "name": cleanTitle,
+    "image": adult.cover_url || adult.poster_path, 
+    "description": adult.details || `Watch or download ${cleanTitle}.`,
+    "uploadDate": adult.release_year ? `${adult.release_year}-01-01` : undefined, // VideoObject prefers a full date format
+    "isFamilyFriendly": false, // ✅ Critical for SafeSearch compliance
+    "genre": genreArray,
+    "potentialAction": {
+      "@type": "WatchAction",
+      "target": `${baseUrl}/adult/${id}` 
+    }
+  };
+  // --- END OF SCHEMA GENERATION ---
+
   return (
-    <MediaDetailCard
-      category="adult"
-      title={adult.title ?? "Untitled"}
-      poster_path={adult.poster_path}
-      genre={adult.genre}
-      release_year={adult.release_year}
-      author={adult.author}
-      artist={adult.artist}
-      // ✅ new plain-text details field
-      extra_details={adult.details}
-      download_link={adult.download_link}
-    />
+    <>
+      {/* INJECT SCHEMA HERE */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
+      <MediaDetailCard
+        category="adult"
+        title={adult.title ?? "Untitled"}
+        poster_path={adult.poster_path}
+        genre={adult.genre}
+        release_year={adult.release_year}
+        author={adult.author}
+        artist={adult.artist}
+        extra_details={adult.details}
+        download_link={adult.download_link}
+      />
+    </>
   );
 }

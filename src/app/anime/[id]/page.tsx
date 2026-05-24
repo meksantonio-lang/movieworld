@@ -47,9 +47,10 @@ export default async function AnimeDetail({ params }: Props) {
   const id = Number(resolvedParams.id);
 
   // Fetch the anime itself
+  // ✅ Added cover_url to the select query
   const { data: anime, error } = await supabase
     .from("media_items")
-    .select("id, title, poster_path, genre, release_year, author, artist, download_link, details")
+    .select("id, title, poster_path, genre, release_year, author, artist, download_link, details, cover_url")
     .eq("id", id)
     .eq("category", "anime")
     .single();
@@ -73,8 +74,50 @@ export default async function AnimeDetail({ params }: Props) {
     console.error("Supabase error fetching episodes:", episodesError);
   }
 
+  // --- START OF SCHEMA GENERATION ---
+  
+  const cleanTitle = anime.title ?? "Untitled Anime";
+  const genreArray = anime.genre ? anime.genre.split(",") : ["Anime"];
+  const baseUrl = "https://moviewrld.com"; 
+
+  // Map the fetched episodes into Google's Episode schema
+  const episodeSchema = episodes && episodes.length > 0 
+    ? episodes.map(ep => ({
+        "@type": "TVEpisode",
+        "episodeNumber": ep.episode_number,
+        "name": `Episode ${ep.episode_number}`,
+        "url": `${baseUrl}/anime/${id}` 
+      }))
+    : undefined;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "TVSeries",
+    "name": cleanTitle,
+    "image": anime.cover_url || anime.poster_path, 
+    "description": anime.details || `Watch or download the anime ${cleanTitle}.`,
+    "dateCreated": anime.release_year ? `${anime.release_year}` : undefined,
+    "genre": genreArray,
+    "containsSeason": {
+      "@type": "TVSeason",
+      "seasonNumber": 1, 
+      "episode": episodeSchema
+    },
+    "potentialAction": {
+      "@type": "WatchAction",
+      "target": `${baseUrl}/anime/${id}` 
+    }
+  };
+  // --- END OF SCHEMA GENERATION ---
+
   return (
     <main className="px-6 py-10">
+      {/* INJECT SCHEMA HERE */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <MediaDetailCard
         category="anime"
         title={anime.title ?? "Untitled"}
@@ -83,7 +126,6 @@ export default async function AnimeDetail({ params }: Props) {
         release_year={anime.release_year}
         author={anime.author}
         artist={anime.artist}
-        // ✅ new plain-text details field
         extra_details={anime.details}
         download_link={anime.download_link}
       />

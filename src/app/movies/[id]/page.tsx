@@ -49,7 +49,7 @@ export default async function MovieDetail({ params }: Props) {
   // Fetch the movie itself
   const { data: movie, error } = await supabase
     .from("media_items")
-    .select("id, title, poster_path, genre, release_year, artist, author, download_link, details")
+    .select("id, title, poster_path, genre, release_year, artist, author, download_link, details, cover_url")
     .eq("id", id)
     .eq("category", "movies")
     .single();
@@ -73,8 +73,42 @@ export default async function MovieDetail({ params }: Props) {
     console.error("Supabase error fetching episodes:", episodesError);
   }
 
+  // --- START OF SCHEMA GENERATION ---
+  
+  // 1. Clean the title
+  // Removes " (YYYY) Movie Download" from titles like "Ron's Gone Wrong (2021) Movie Download"
+  const cleanTitle = movie.title ? movie.title.replace(/\s\(\d{4}\).*$/, "") : "Untitled Movie";
+
+  // 2. Format genres into an array
+  const genreArray = movie.genre ? movie.genre.split(",") : [];
+
+  // 3. Define the Base URL
+  const baseUrl = "https://moviewrld.com"; 
+
+  // 4. Construct the JSON-LD Object
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Movie",
+    "name": cleanTitle,
+    "image": movie.cover_url || movie.poster_path, 
+    "description": movie.details || `Watch or download ${cleanTitle}.`,
+    "dateCreated": movie.release_year ? `${movie.release_year}` : undefined,
+    "genre": genreArray,
+    "potentialAction": {
+      "@type": "WatchAction",
+      "target": `${baseUrl}/movie/${id}` 
+    }
+  };
+  // --- END OF SCHEMA GENERATION ---
+
   return (
     <main className="px-6 py-10">
+      {/* INJECT SCHEMA HERE */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <MediaDetailCard
         category="movies"
         title={movie.title ?? "Untitled"}
@@ -83,7 +117,6 @@ export default async function MovieDetail({ params }: Props) {
         release_year={movie.release_year}
         artist={movie.artist}
         author={movie.author}
-        // ✅ new plain-text details field
         extra_details={movie.details}
         download_link={movie.download_link}
       />

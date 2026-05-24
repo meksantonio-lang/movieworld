@@ -47,9 +47,10 @@ export default async function KdramaDetail({ params }: Props) {
   const id = Number(resolvedParams.id);
 
   // Fetch the kdrama itself
+  // ✅ Added cover_url to the select query
   const { data: kdrama, error } = await supabase
     .from("media_items")
-    .select("id, title, poster_path, genre, release_year, author, artist, download_link, details")
+    .select("id, title, poster_path, genre, release_year, author, artist, download_link, details, cover_url")
     .eq("id", id)
     .eq("category", "kdrama")
     .single();
@@ -73,8 +74,50 @@ export default async function KdramaDetail({ params }: Props) {
     console.error("Supabase error fetching episodes:", episodesError);
   }
 
+  // --- START OF SCHEMA GENERATION ---
+  
+  const cleanTitle = kdrama.title ?? "Untitled K-Drama";
+  const genreArray = kdrama.genre ? kdrama.genre.split(",") : ["Korean Drama"];
+  const baseUrl = "https://moviewrld.com"; 
+
+  // Map the fetched episodes into Google's Episode schema
+  const episodeSchema = episodes && episodes.length > 0 
+    ? episodes.map(ep => ({
+        "@type": "TVEpisode",
+        "episodeNumber": ep.episode_number,
+        "name": `Episode ${ep.episode_number}`,
+        "url": `${baseUrl}/kdrama/${id}` // Pointing back to the main series page where they can find the link
+      }))
+    : undefined;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "TVSeries",
+    "name": cleanTitle,
+    "image": kdrama.cover_url || kdrama.poster_path, 
+    "description": kdrama.details || `Watch or download the K-Drama ${cleanTitle}.`,
+    "dateCreated": kdrama.release_year ? `${kdrama.release_year}` : undefined,
+    "genre": genreArray,
+    "containsSeason": {
+      "@type": "TVSeason",
+      "seasonNumber": 1, // Assuming standard single-season kdrama format
+      "episode": episodeSchema
+    },
+    "potentialAction": {
+      "@type": "WatchAction",
+      "target": `${baseUrl}/kdrama/${id}` 
+    }
+  };
+  // --- END OF SCHEMA GENERATION ---
+
   return (
     <main className="px-6 py-10">
+      {/* INJECT SCHEMA HERE */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <MediaDetailCard
         category="kdrama"
         title={kdrama.title ?? "Untitled"}
@@ -83,7 +126,6 @@ export default async function KdramaDetail({ params }: Props) {
         release_year={kdrama.release_year}
         author={kdrama.author}
         artist={kdrama.artist}
-        // ✅ new plain-text details field
         extra_details={kdrama.details}
         download_link={kdrama.download_link}
       />

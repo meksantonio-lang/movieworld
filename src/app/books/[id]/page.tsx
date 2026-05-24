@@ -48,9 +48,10 @@ export default async function BookDetail({ params }: Props) {
   const id = Number(resolvedParams.id);
 
   // Fetch the book itself
+  // ✅ Added cover_url to the select query
   const { data: book, error } = await supabase
     .from("media_items")
-    .select("id, title, poster_path, genre, release_year, author, artist, download_link, details")
+    .select("id, title, poster_path, genre, release_year, author, artist, download_link, details, cover_url")
     .eq("id", id)
     .eq("category", "books")
     .single();
@@ -74,8 +75,47 @@ export default async function BookDetail({ params }: Props) {
     console.error("Supabase error fetching chapters:", chaptersError);
   }
 
+  // --- START OF SCHEMA GENERATION ---
+  
+  const cleanTitle = book.title ?? "Untitled Book";
+  // Convert standard genres or default to "eBook"
+  const genreArray = book.genre ? book.genre.split(",") : ["eBook"];
+  const baseUrl = "https://moviewrld.com"; 
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Book",
+    "name": cleanTitle,
+    "image": book.cover_url || book.poster_path, 
+    "description": book.details || `Download and read ${cleanTitle}${book.author ? ` by ${book.author}` : ''}.`,
+    "datePublished": book.release_year ? `${book.release_year}` : undefined,
+    "genre": genreArray,
+    "author": book.author ? {
+      "@type": "Person",
+      "name": book.author
+    } : undefined,
+    "potentialAction": {
+      "@type": "ReadAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": `${baseUrl}/books/${id}`, // ✅ Points directly to this page
+        "actionPlatform": [
+          "http://schema.org/DesktopWebPlatform",
+          "http://schema.org/MobileWebPlatform"
+        ]
+      }
+    }
+  };
+  // --- END OF SCHEMA GENERATION ---
+
   return (
     <main className="px-6 py-10">
+      {/* INJECT SCHEMA HERE */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <MediaDetailCard
         category="books"
         title={book.title ?? "Untitled"}
@@ -84,7 +124,6 @@ export default async function BookDetail({ params }: Props) {
         release_year={book.release_year}
         author={book.author}
         artist={book.artist}
-        // ✅ new plain-text details field
         extra_details={book.details}
         download_link={book.download_link}
       />
