@@ -6,15 +6,15 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
-// ✅ Generates SEO Metadata for Google Search
+// ✅ Generates SEO Metadata for Google Search & Social Media (OG)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 
-  // Fetch only the fields needed for SEO
+  // Fetch only the fields needed for SEO and OG
   const { data: anime } = await supabase
     .from("media_items")
-    .select("title, details")
+    .select("title, details, cover_url, poster_path")
     .eq("id", id)
     .eq("category", "anime")
     .single();
@@ -26,12 +26,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const animeTitle = anime.title ?? "Untitled Anime";
+  const animeDesc = anime.details 
+    ? anime.details.substring(0, 160) // Keep description under Google's 160 char limit
+    : `Download and stream ${animeTitle} anime episodes on MovieWrld.`;
+
+  // Determine the best image to share, falling back to a default if none exist
+  const ogImage = anime.cover_url || anime.poster_path || "https://moviewrld.com/favicon.ico";
 
   return {
     title: `${animeTitle} Anime - Download & Stream | MovieWrld`,
-    description: anime.details 
-      ? anime.details.substring(0, 160) // Keep description under Google's 160 char limit
-      : `Download and stream ${animeTitle} anime episodes on MovieWrld.`,
+    description: animeDesc,
     keywords: [
       `${animeTitle} anime download`,
       `download ${animeTitle} episodes`,
@@ -39,6 +43,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `${animeTitle} sub dub download`,
       `${animeTitle} full season download`
     ],
+    // ✅ NEW: Open Graph for WhatsApp, Discord, Facebook, etc.
+    openGraph: {
+      title: animeTitle,
+      description: animeDesc,
+      url: `https://moviewrld.com/anime/${id}`,
+      siteName: "MovieWrld",
+      images: [
+        {
+          url: ogImage,
+          width: 800,
+          height: 600,
+          alt: `${animeTitle} Poster`,
+        },
+      ],
+      type: "video.tv_show", 
+    },
+    // ✅ NEW: Twitter Specific Cards
+    twitter: {
+      card: "summary_large_image",
+      title: animeTitle,
+      description: animeDesc,
+      images: [ogImage],
+    },
   };
 }
 
@@ -47,7 +74,6 @@ export default async function AnimeDetail({ params }: Props) {
   const id = Number(resolvedParams.id);
 
   // Fetch the anime itself
-  // ✅ Added cover_url to the select query
   const { data: anime, error } = await supabase
     .from("media_items")
     .select("id, title, poster_path, genre, release_year, author, artist, download_link, details, cover_url")

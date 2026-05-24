@@ -6,15 +6,15 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
-// ✅ Generates SEO Metadata for Google Search
+// ✅ Generates SEO Metadata for Google Search & Social Media (OG)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 
-  // Fetch only the fields needed for SEO to keep it fast
+  // Fetch only the fields needed for SEO and OG to keep it fast
   const { data: movie } = await supabase
     .from("media_items")
-    .select("title, details")
+    .select("title, details, cover_url, poster_path")
     .eq("id", id)
     .eq("category", "movies")
     .single();
@@ -26,12 +26,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const movieTitle = movie.title ?? "Untitled Movie";
+  const movieDesc = movie.details 
+    ? movie.details.substring(0, 160) // Keep description under Google's 160 char limit
+    : `Download and stream ${movieTitle} on MovieWrld.`;
+
+  // Determine the best image to share, falling back to a default if none exist
+  const ogImage = movie.cover_url || movie.poster_path || "https://moviewrld.com/favicon.ico";
 
   return {
     title: `${movieTitle} - Download & Stream | MovieWrld`,
-    description: movie.details 
-      ? movie.details.substring(0, 160) // Keep description under Google's 160 char limit
-      : `Download and stream ${movieTitle} on MovieWrld.`,
+    description: movieDesc,
     keywords: [
       `${movieTitle} download`,
       `download ${movieTitle}`,
@@ -39,6 +43,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `${movieTitle} full movie download`,
       `${movieTitle} mp4 download`
     ],
+    // ✅ NEW: Open Graph for WhatsApp, Discord, Facebook, etc.
+    openGraph: {
+      title: movieTitle,
+      description: movieDesc,
+      url: `https://moviewrld.com/movie/${id}`,
+      siteName: "MovieWrld",
+      images: [
+        {
+          url: ogImage,
+          width: 800,
+          height: 600,
+          alt: `${movieTitle} Poster`,
+        },
+      ],
+      type: "video.movie", 
+    },
+    // ✅ NEW: Twitter Specific Cards
+    twitter: {
+      card: "summary_large_image",
+      title: movieTitle,
+      description: movieDesc,
+      images: [ogImage],
+    },
   };
 }
 

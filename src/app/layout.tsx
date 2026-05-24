@@ -1,12 +1,14 @@
-import "@/app/globals.css"; // ✅ fixed import path
+import type { Metadata } from 'next';
+import "@/app/globals.css"; 
 import Navbar from "@/components/Navbar";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 
 // This is what Google and Social Media bots read
-export const metadata = {
+export const metadata: Metadata = {
+  metadataBase: new URL("https://moviewrld.com"),
   title: "MovieWrld 🌍 | Movies, Music & Books",
   description:
-    "Download high-quality movies, latest Hollywood, Nollywood, K-drama and Bollywood movies, Download trending Afrobeats, Hip-hop and Pop music, get best-selling eBooks instantly with no sign-up required.",
+    "Download high-quality movies, latest Hollywood movies, Anime, K-drama, Download trending Afrobeats, Hip-hop and Pop music, get best-selling eBooks instantly for free.",
   keywords: [
     "Movies",
     "Afrobeats",
@@ -16,17 +18,17 @@ export const metadata = {
     "Free Content",
   ],
   icons: {
-    icon: "/favicon.ico", // ✅ your favicon
+    icon: "/favicon.ico", // Automatically reads from src/app/favicon.ico
   },
   openGraph: {
     title: "MovieWrld - Your Digital Entertainment Hub",
     description:
       "Stream and download your favorite media in one click. No registration, just instant access.",
-    url: "https://your-domain.com", // Replace with your domain later
+    url: "https://moviewrld.com",
     siteName: "MovieWrld",
     images: [
       {
-        url: "https://your-domain.com/favicon.ico", // ✅ absolute URL for logo
+        url: "https://moviewrld.com/favicon.ico", // Consider changing to a .png or .jpg later
         width: 512,
         height: 512,
       },
@@ -38,7 +40,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "MovieWrld | Instant Downloads",
     description: "Download movies, books, and music for free.",
-    images: ["https://your-domain.com/favicon.ico"], // ✅ Twitter logo
+    images: ["https://moviewrld.com/favicon.ico"],
   },
 };
 
@@ -53,8 +55,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              url: "https://your-domain.com", // Replace with your domain
-              logo: "https://your-domain.com/favicon.ico",
+              "url": "https://moviewrld.com",
+              "logo": "https://moviewrld.com/favicon.ico",
             }),
           }}
         />

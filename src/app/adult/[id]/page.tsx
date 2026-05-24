@@ -6,15 +6,15 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
-// ✅ Generates SEO Metadata for Google Search
+// ✅ Generates SEO Metadata for Google Search & Social Media (OG)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 
-  // Fetch only the fields needed for SEO
+  // Fetch only the fields needed for SEO and OG
   const { data: adult } = await supabase
     .from("media_items")
-    .select("title, details")
+    .select("title, details, cover_url, poster_path")
     .eq("id", id)
     .eq("category", "adult")
     .single();
@@ -26,12 +26,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const adultTitle = adult.title ?? "Untitled Content";
+  const adultDesc = adult.details 
+    ? adult.details.substring(0, 160) // Keep description under Google's 160 char limit
+    : `Download and stream ${adultTitle} on MovieWrld.`;
+
+  // Determine the best image to share, falling back to a default if none exist
+  const ogImage = adult.cover_url || adult.poster_path || "https://moviewrld.com/favicon.ico";
 
   return {
     title: `${adultTitle} - Download & Stream | MovieWrld`,
-    description: adult.details 
-      ? adult.details.substring(0, 160) // Keep description under Google's 160 char limit
-      : `Download and stream ${adultTitle} on MovieWrld.`,
+    description: adultDesc,
     keywords: [
       `${adultTitle} download`,
       `download ${adultTitle}`,
@@ -39,6 +43,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `${adultTitle} adult content download`,
       `${adultTitle} full video download`
     ],
+    // ✅ NEW: Open Graph for WhatsApp, Discord, Facebook, etc.
+    openGraph: {
+      title: adultTitle,
+      description: adultDesc,
+      url: `https://moviewrld.com/adult/${id}`,
+      siteName: "MovieWrld",
+      images: [
+        {
+          url: ogImage,
+          width: 800,
+          height: 600,
+          alt: `${adultTitle} Preview`,
+        },
+      ],
+      type: "video.other", 
+    },
+    // ✅ NEW: Twitter Specific Cards
+    twitter: {
+      card: "summary_large_image",
+      title: adultTitle,
+      description: adultDesc,
+      images: [ogImage],
+    },
   };
 }
 

@@ -6,15 +6,15 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
-// ✅ Generates SEO Metadata for Google Search
+// ✅ Generates SEO Metadata for Google Search & Social Media (OG)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 
-  // Fetch only the fields needed for SEO
+  // Fetch only the fields needed for SEO and OG
   const { data: music } = await supabase
     .from("media_items")
-    .select("title, artist, details")
+    .select("title, artist, details, cover_url, poster_path")
     .eq("id", id)
     .eq("category", "music")
     .single();
@@ -27,19 +27,48 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const musicTitle = music.title ?? "Untitled Track";
   const artistString = music.artist ? ` by ${music.artist}` : "";
+  const fullTitle = `${musicTitle}${artistString}`;
+
+  const musicDesc = music.details 
+    ? music.details.substring(0, 160) // Keep description under Google's 160 char limit
+    : `Download and stream ${fullTitle} on MovieWrld.`;
+
+  // Determine the best image to share, falling back to a default if none exist
+  const ogImage = music.cover_url || music.poster_path || "https://moviewrld.com/favicon.ico";
 
   return {
-    title: `${musicTitle}${artistString} - Download MP3 | MovieWrld`,
-    description: music.details 
-      ? music.details.substring(0, 160) // Keep description under Google's 160 char limit
-      : `Download and stream ${musicTitle}${artistString} on MovieWrld.`,
+    title: `${fullTitle} - Download MP3 | MovieWrld`,
+    description: musicDesc,
     keywords: [
       `${musicTitle} mp3 download`,
       `download ${musicTitle} audio`,
-      `${musicTitle}${artistString} free download`,
+      `${fullTitle} free download`,
       `${musicTitle} song download`,
       `latest music download`
     ],
+    // ✅ NEW: Open Graph for WhatsApp, Discord, Facebook, etc.
+    openGraph: {
+      title: fullTitle,
+      description: musicDesc,
+      url: `https://moviewrld.com/music/${id}`,
+      siteName: "MovieWrld",
+      images: [
+        {
+          url: ogImage,
+          width: 800,
+          height: 800, // Square ratio often works best for album art
+          alt: `${fullTitle} Cover Art`,
+        },
+      ],
+      type: "music.song", 
+    },
+    // ✅ NEW: Twitter Specific Cards
+    twitter: {
+      card: "summary_large_image",
+      title: fullTitle,
+      description: musicDesc,
+      images: [ogImage],
+    },
   };
 }
 
@@ -47,7 +76,7 @@ export default async function MusicDetail({ params }: Props) {
   const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 
-  // ✅ Added cover_url to the select query just in case it differs from poster_path
+  // Fetch the music itself
   const { data: music, error } = await supabase
     .from("media_items")
     .select("id, title, poster_path, genre, release_year, artist, author, download_link, details, cover_url")
@@ -83,7 +112,7 @@ export default async function MusicDetail({ params }: Props) {
     } : undefined,
     "potentialAction": {
       "@type": "ListenAction",
-      "target": `${baseUrl}/music/${id}` // ✅ Points directly to this page
+      "target": `${baseUrl}/music/${id}` 
     }
   };
   // --- END OF SCHEMA GENERATION ---

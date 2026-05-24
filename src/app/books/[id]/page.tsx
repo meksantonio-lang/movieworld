@@ -6,15 +6,15 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
-// ✅ Generates SEO Metadata for Google Search
+// ✅ Generates SEO Metadata for Google Search & Social Media (OG)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 
-  // Fetch only the fields needed for SEO
+  // Fetch only the fields needed for SEO and OG
   const { data: book } = await supabase
     .from("media_items")
-    .select("title, author, details")
+    .select("title, author, details, cover_url, poster_path")
     .eq("id", id)
     .eq("category", "books")
     .single();
@@ -27,19 +27,48 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const bookTitle = book.title ?? "Untitled Book";
   const authorString = book.author ? ` by ${book.author}` : "";
+  const fullTitle = `${bookTitle}${authorString}`;
+
+  const bookDesc = book.details 
+    ? book.details.substring(0, 160) // Keep description under Google's 160 char limit
+    : `Download and read ${fullTitle} on MovieWrld.`;
+
+  // Determine the best image to share, falling back to a default if none exist
+  const ogImage = book.cover_url || book.poster_path || "https://moviewrld.com/favicon.ico";
 
   return {
-    title: `${bookTitle}${authorString} - Download PDF & EPUB | MovieWrld`,
-    description: book.details 
-      ? book.details.substring(0, 160) // Keep description under Google's 160 char limit
-      : `Download and read ${bookTitle}${authorString} on MovieWrld.`,
+    title: `${fullTitle} - Download PDF & EPUB | MovieWrld`,
+    description: bookDesc,
     keywords: [
       `${bookTitle} pdf download`,
       `download ${bookTitle} ebook`,
       `${bookTitle} epub free download`,
-      `${bookTitle}${authorString} download`,
+      `${fullTitle} download`,
       `read ${bookTitle} online free`
     ],
+    // ✅ NEW: Open Graph for WhatsApp, Discord, Facebook, etc.
+    openGraph: {
+      title: fullTitle,
+      description: bookDesc,
+      url: `https://moviewrld.com/books/${id}`,
+      siteName: "MovieWrld",
+      images: [
+        {
+          url: ogImage,
+          width: 800,
+          height: 1200, // Portrait ratio works best for book covers
+          alt: `${fullTitle} Cover`,
+        },
+      ],
+      type: "book", 
+    },
+    // ✅ NEW: Twitter Specific Cards
+    twitter: {
+      card: "summary_large_image",
+      title: fullTitle,
+      description: bookDesc,
+      images: [ogImage],
+    },
   };
 }
 

@@ -6,15 +6,15 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
-// ✅ Generates SEO Metadata for Google Search
+// ✅ Generates SEO Metadata for Google Search & Social Media (OG)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const id = Number(resolvedParams.id);
 
-  // Fetch only the fields needed for SEO
+  // Fetch only the fields needed for SEO and OG
   const { data: kdrama } = await supabase
     .from("media_items")
-    .select("title, details")
+    .select("title, details, cover_url, poster_path")
     .eq("id", id)
     .eq("category", "kdrama")
     .single();
@@ -26,12 +26,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const kdramaTitle = kdrama.title ?? "Untitled K-Drama";
+  const kdramaDesc = kdrama.details 
+    ? kdrama.details.substring(0, 160) // Keep description under Google's 160 char limit
+    : `Download and stream ${kdramaTitle} K-Drama episodes on MovieWrld.`;
+
+  // Determine the best image to share, falling back to a default if none exist
+  const ogImage = kdrama.cover_url || kdrama.poster_path || "https://moviewrld.com/favicon.ico";
 
   return {
     title: `${kdramaTitle} K-Drama - Download & Stream | MovieWrld`,
-    description: kdrama.details 
-      ? kdrama.details.substring(0, 160) // Keep description under Google's 160 char limit
-      : `Download and stream ${kdramaTitle} K-Drama episodes on MovieWrld.`,
+    description: kdramaDesc,
     keywords: [
       `${kdramaTitle} kdrama download`,
       `download ${kdramaTitle} episodes`,
@@ -39,6 +43,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `${kdramaTitle} eng sub download`,
       `${kdramaTitle} full season download`
     ],
+    // ✅ NEW: Open Graph for WhatsApp, Discord, Facebook, etc.
+    openGraph: {
+      title: kdramaTitle,
+      description: kdramaDesc,
+      url: `https://moviewrld.com/kdrama/${id}`,
+      siteName: "MovieWrld",
+      images: [
+        {
+          url: ogImage,
+          width: 800,
+          height: 600,
+          alt: `${kdramaTitle} Poster`,
+        },
+      ],
+      type: "video.tv_show", 
+    },
+    // ✅ NEW: Twitter Specific Cards
+    twitter: {
+      card: "summary_large_image",
+      title: kdramaTitle,
+      description: kdramaDesc,
+      images: [ogImage],
+    },
   };
 }
 
