@@ -5,17 +5,20 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function CategoryPage({
-  params,
-  searchParams,
-}: {
-  params: { category: string };
-  searchParams: { page?: string };
-}) {
-  const { category } = params;
+type PageProps = {
+  params: Promise<{ category: string }>;
+  searchParams: Promise<{ page?: string }>;
+};
+
+export default async function CategoryPage({ params, searchParams }: PageProps) {
+  // ✅ Await both dynamic params and searchParams for Next.js 15 compliance
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+
+  const { category } = resolvedParams;
   
   // Grab the page number from the URL (e.g., ?page=2), default to 1 if it doesn't exist
-  const currentPage = Number(searchParams.page) || 1;
+  const currentPage = Number(resolvedSearchParams.page) || 1;
 
   let items = [];
   let title = "";
