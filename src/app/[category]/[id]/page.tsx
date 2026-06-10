@@ -7,10 +7,15 @@ import CommentSection from "@/components/CommentSection";
 
 export const dynamic = "force-dynamic";
 
-// ✅ 1. DYNAMIC METADATA GENERATOR
-export async function generateMetadata({ params }: { params: { category: string; id: string } }): Promise<Metadata> {
-  const tmdbType = params.category === "movies" ? "movie" : "tv";
-  const mediaId = Number(params.id);
+type PageProps = {
+  params: Promise<{ category: string; id: string }>;
+};
+
+// ✅ 1. DYNAMIC METADATA GENERATOR (Next.js 15 Async Params)
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const resolvedParams = await params;
+  const tmdbType = resolvedParams.category === "movies" ? "movie" : "tv";
+  const mediaId = Number(resolvedParams.id);
 
   // Fetch just the details for the SEO card
   const details = await getMediaDetails(tmdbType, mediaId);
@@ -34,7 +39,7 @@ export async function generateMetadata({ params }: { params: { category: string;
     openGraph: {
       title: `${title} | Moviewrld`,
       description: description,
-      url: `https://moviewrld.com/category/${params.category}/${params.id}`,
+      url: `https://moviewrld.com/${resolvedParams.category}/${resolvedParams.id}`,
       siteName: "Moviewrld",
       images: [
         {
@@ -55,10 +60,11 @@ export async function generateMetadata({ params }: { params: { category: string;
   };
 }
 
-// 2. MAIN PAGE COMPONENT
-export default async function MediaPage({ params }: { params: { category: string; id: string } }) {
-  const tmdbType = params.category === "movies" ? "movie" : "tv";
-  const mediaId = Number(params.id);
+// 2. MAIN PAGE COMPONENT (Next.js 15 Async Params)
+export default async function MediaPage({ params }: PageProps) {
+  const resolvedParams = await params;
+  const tmdbType = resolvedParams.category === "movies" ? "movie" : "tv";
+  const mediaId = Number(resolvedParams.id);
 
   // 1. Fetch all TMDB data AND your Supabase admin review concurrently
   const [details, cast, trailerKey, adminReviewResult] = await Promise.all([
@@ -143,7 +149,7 @@ export default async function MediaPage({ params }: { params: { category: string
                 media={{
                   id: mediaId,
                   title: title,
-                  category: params.category,
+                  category: resolvedParams.category,
                   image: poster,
                   year: year || ""
                 }} 
