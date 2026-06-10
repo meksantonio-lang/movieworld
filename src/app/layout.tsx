@@ -1,34 +1,38 @@
 import type { Metadata } from 'next';
 import "@/app/globals.css"; 
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 
 // This is what Google and Social Media bots read
 export const metadata: Metadata = {
   metadataBase: new URL("https://moviewrld.com"),
-  title: "MovieWrld 🌍 | Movies, Music & Books",
+  title: "MovieWorld 🌍 | Ratings, Reviews, Trailers & News",
   description:
-    "Download high-quality movies, latest Hollywood movies, Anime, K-drama, Download trending Afrobeats, Hip-hop and Pop music, get best-selling eBooks instantly for free.",
+    "Your ultimate hub for trending movies, anime, and K-dramas. Watch official trailers, read the latest Hollywood and anime news, drop reviews, and explore cast details.",
   keywords: [
     "Movies",
-    "Afrobeats",
-    "Downloads",
-    "eBooks",
-    "MovieWrld",
-    "Free Content",
+    "Anime",
+    "K-Drama",
+    "Movie Reviews",
+    "Trailers",
+    "Entertainment News",
+    "Hollywood Gossip",
+    "MovieWorld",
+    "Ratings",
   ],
   icons: {
-    icon: "/favicon.ico", // Automatically reads from src/app/favicon.ico
+    icon: "/favicon.ico",
   },
   openGraph: {
-    title: "MovieWrld - Your Digital Entertainment Hub",
+    title: "MovieWrld - Ratings, Reviews, Trailers & News",
     description:
-      "Stream and download your favorite media in one click. No registration, just instant access.",
+      "Discover top trending movies, anime, and K-dramas. Catch up on the latest celebrity scoops, watch official trailers, and see what others are saying.",
     url: "https://moviewrld.com",
     siteName: "MovieWrld",
     images: [
       {
-        url: "https://moviewrld.com/Logo.png", // Consider changing to a .png or .jpg later
+        url: "https://moviewrld.com/Logo.png", 
         width: 512,
         height: 512,
       },
@@ -38,8 +42,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "MovieWrld | Instant Downloads",
-    description: "Download movies, books, and music for free.",
+    title: "MovieWrld | Ultimate Entertainment Hub & News",
+    description: "Watch trailers, catch up on Hollywood scoops, and rate your favorite movies, anime, and K-dramas.",
     images: ["https://moviewrld.com/Logo.png"],
   },
 };
@@ -61,10 +65,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="bg-black text-white antialiased">
+      {/* Added flex layout to ensure the footer always sticks to the bottom */}
+      <body className="bg-gray-950 text-white antialiased flex flex-col min-h-screen">
         <FavoritesProvider>
           <Navbar />
-          <main className="min-h-screen">{children}</main>
+          <main className="flex-grow">{children}</main>
+          <Footer />
         </FavoritesProvider>
       </body>
     </html>

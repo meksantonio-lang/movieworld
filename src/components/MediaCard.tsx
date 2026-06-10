@@ -1,82 +1,46 @@
 import Link from "next/link";
-import Image from "next/image";
 
-export interface MediaCardProps {
+interface MediaCardProps {
   id: string | number;
   title: string;
   category: string;
-  image?: string;        // ✅ optional for adult
-  cover_url?: string;    // ✅ optional for TMDB/Spotify/Books
-  downloadLink: string;
-  author?: string;
-  releaseYear?: string | number | null;
-  artist?: string;
+  image: string;
+  downloadLink?: string; // Kept as an optional prop so we don't break any old code still referencing it
+  releaseYear?: string;
 }
 
-export default function MediaCard({
-  id,
-  title,
-  category,
-  image,
-  cover_url,
-  downloadLink,
-  author,
-  releaseYear,
-  artist,
-}: MediaCardProps) {
-  // ✅ Prefer image if provided (adult), fallback to cover_url (other categories)
-  const displayImage = image || cover_url || "/placeholder-poster.png";
-  const isExternal = displayImage?.startsWith("http");
-
+export default function MediaCard({ id, title, category, image, releaseYear }: MediaCardProps) {
   return (
-    <div className="border rounded-lg shadow-md overflow-hidden">
-      <Link href={`/${category}/${id}`} className="block">
-        {isExternal ? (
-          <img
-            src={displayImage}
-            alt={title}
-            className="w-full h-auto"
-            width={300}
-            height={450}
-          />
-        ) : (
-          <Image
-            src={displayImage}
-            alt={title}
-            width={300}
-            height={450}
-            className="w-full h-auto"
-          />
-        )}
-      </Link>
+    <Link 
+      href={`/${category}/${id}`} 
+      className="group relative rounded-xl overflow-hidden cursor-pointer bg-gray-900 aspect-[2/3] block transition-all duration-300 hover:scale-[1.02] hover:ring-2 hover:ring-purple-500 shadow-lg"
+    >
+      {/* Poster Image */}
+      <img 
+        src={image} 
+        alt={title}
+        loading="lazy"
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+      />
+      
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-300" />
 
-      <div className="p-4">
-        <h3 className="text-lg font-semibold">
-          <Link
-            href={`/${category}/${id}`}
-            className="text-purple-600 hover:underline"
-          >
-            {title}
-          </Link>
-        </h3>
-        <p className="text-sm text-gray-500">{category}</p>
-        {artist && <p className="text-sm text-gray-700">Artist: {artist}</p>}
-        {author && <p className="text-sm text-gray-700">By {author}</p>}
-        {releaseYear && (
-          <p className="text-sm text-gray-700">Published {releaseYear}</p>
-        )}
-
-        {downloadLink && (
-          <a
-            href={downloadLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-block bg-purple-600 text-white px-4 py-2 rounded"
-          >
-            Download
-          </a>
-        )}
+      {/* Text Content */}
+      <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+        <h4 className="text-white font-black text-lg line-clamp-1 drop-shadow-md">
+          {title}
+        </h4>
+        
+        <div className="flex items-center justify-between mt-2 text-sm">
+          <span className="font-bold text-gray-300 bg-white/10 px-2 py-0.5 rounded backdrop-blur-sm">
+            {releaseYear || "TBA"}
+          </span>
+          <span className="text-purple-400 font-bold text-xs uppercase tracking-widest group-hover:text-purple-300 transition-colors">
+            Details →
+          </span>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }

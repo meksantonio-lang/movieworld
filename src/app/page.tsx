@@ -1,191 +1,118 @@
-export const dynamic = "force-dynamic";
-
-import { supabase } from "@/lib/supabaseClient";
+import { getTrendingMovies, getTrendingAnime, getTrendingKDramas, getMediaTrailer } from "@/lib/tmdb";
 import MediaCard from "@/components/MediaCard";
-import { MediaItemRow, TMDBMovie } from "@/types/media";
+import HomepageNews from "@/components/HomepageNews";
 import Link from "next/link";
 
-type EnrichedItem = TMDBMovie & {
-  download_link?: string | null;
-  id?: number | string;
-  imdb_id?: string | null;
-  poster_thumb?: string | null;
-  category?: string;
-};
-
-async function fetchCategoryRows(category: string, limit = 8) {
-  const { data, error } = await supabase
-    .from("media_items")
-    .select(
-      "id,title,tmdb_id,poster_path,poster_thumb,download_link,release_date,category,created_at"
-    )
-    .eq("category", category)
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    console.error(`Supabase error fetching ${category}:`, error);
-    return [];
-  }
-  return (data as MediaItemRow[]) ?? [];
-}
-
-async function enrichRowsWithTMDB(rows: MediaItemRow[], mediaKind: "movie" | "tv") {
-  return Promise.all(
-    rows.map(async (r) => {
-      const dbDownload = r.download_link ?? null;
-
-      if (!r.tmdb_id) {
-        return {
-          id: r.id,
-          category: r.category,
-          download_link: dbDownload,
-          release_date: r.release_date ?? "",
-          title: r.title ?? `Untitled (${r.id})`,
-          poster_path: r.poster_path ?? "",
-          poster_thumb: r.poster_thumb ?? null,
-        } as EnrichedItem;
-      }
-
-      const endpoint =
-        mediaKind === "movie"
-          ? `https://api.themoviedb.org/3/movie/${r.tmdb_id}`
-          : `https://api.themoviedb.org/3/tv/${r.tmdb_id}`;
-
-      try {
-        const res = await fetch(`${endpoint}?api_key=${process.env.TMDB_API_KEY}`, {
-          cache: "no-store",
-        });
-        if (!res.ok) {
-          return {
-            id: r.id,
-            category: r.category,
-            download_link: dbDownload,
-            release_date: r.release_date ?? "",
-            title: r.title ?? `Untitled (${r.id})`,
-            poster_path: r.poster_path ?? "",
-            poster_thumb: r.poster_thumb ?? null,
-          } as EnrichedItem;
-        }
-
-        const meta: TMDBMovie = await res.json();
-        return {
-          id: r.id,
-          category: r.category,
-          download_link: dbDownload,
-          release_date: r.release_date ?? meta.release_date ?? "",
-          // ✅ Supabase title wins, fallback to TMDB
-          title: r.title ?? meta.title ?? `Untitled (${r.id})`,
-          // ✅ Supabase poster wins, fallback to TMDB
-          poster_path: r.poster_path ?? meta.poster_path ?? "",
-          poster_thumb: r.poster_thumb ?? null,
-        } as EnrichedItem;
-      } catch {
-        return {
-          id: r.id,
-          category: r.category,
-          download_link: dbDownload,
-          release_date: r.release_date ?? "",
-          title: r.title ?? `Untitled (${r.id})`,
-          poster_path: r.poster_path ?? "",
-          poster_thumb: r.poster_thumb ?? null,
-        } as EnrichedItem;
-      }
-    })
-  );
-}
+export const dynamic = "force-dynamic";
 
 function SectionHeader({ title, category }: { title: string; category: string }) {
   return (
-    <div className="flex items-center justify-between mb-4">
-      <h3 className="text-xl font-semibold text-purple-600">{title}</h3>
+    <div className="flex items-center justify-between mb-6">
+      <h3 className="text-2xl font-bold text-white uppercase tracking-wider">{title}</h3>
       <Link
         href={`/${category}`}
-        className="text-sm text-purple-600 hover:underline"
-        aria-label={`See all ${title}`}
+        className="text-sm font-bold text-purple-400 hover:text-purple-300 hover:underline transition-colors uppercase"
       >
-        See all →
+        See More →
       </Link>
     </div>
   );
 }
 
 export default async function HomePage() {
-  const [movieRows, musicRows, animeRows, kdramaRows] = await Promise.all([
-    fetchCategoryRows("movies", 8),
-    fetchCategoryRows("music", 8),
-    fetchCategoryRows("anime", 8),
-    fetchCategoryRows("kdrama", 8),
-  ]);
-
+  // 1. Fetch live data from your new TMDB engine
   const [movies, anime, kdrama] = await Promise.all([
-    enrichRowsWithTMDB(movieRows, "movie"),
-    enrichRowsWithTMDB(animeRows, "tv"),
-    enrichRowsWithTMDB(kdramaRows, "tv"),
+    getTrendingMovies(),
+    getTrendingAnime(),
+    getTrendingKDramas(),
   ]);
 
-  const songs = (musicRows || []).map((s) => ({
-    id: s.id,
-    category: s.category,
-    download_link: s.download_link ?? "",
-    release_date: s.release_date ?? "",
-    title: s.title ?? `Untitled (${s.id})`,
-    poster_path: s.poster_path ?? "",
-    poster_thumb: s.poster_thumb ?? null,
-  })) as EnrichedItem[];
+  // 2. Slice to get only the top 3 for the homepage grids
+  const topMovies = movies.slice(0, 3);
+  const topAnime = anime.slice(0, 3);
+  const topKdrama = kdrama.slice(0, 3);
 
-  const section = (title: string, category: string, items: EnrichedItem[]) => (
-    <section className="mb-12">
+  // 3. Grab the #1 trending movie for the Hero Trailer embed
+  const heroMovie = movies[0];
+  const heroTrailerKey = heroMovie ? await getMediaTrailer("movie", heroMovie.id) : null;
+
+  // Helper function to render a category section
+  const renderSection = (title: string, category: string, items: any[]) => (
+    <section className="mb-16">
       <SectionHeader title={title} category={category} />
-      {items.length === 0 ? (
-        <p className="text-sm text-gray-500">No items yet.</p>
-      ) : (
-        <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
-          {items.map((m) => {
-            const key = String(m.id);
-            
-            // ✅ Clean up the title for display on the main page cards
-            // This takes everything before the first "(" and trims extra space
-            const displayTitle = m.title 
-              ? m.title.split("(")[0].trim() 
-              : `Untitled (${m.id})`;
-              
-            const year = m.release_date ? String(m.release_date).slice(0, 4) : "";
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-3">
+        {items.map((m) => {
+          const year = m.release_date ? m.release_date.slice(0, 4) : m.first_air_date ? m.first_air_date.slice(0, 4) : "";
+          const poster = m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : "/placeholder.png";
 
-            const image =
-              m.poster_path && String(m.poster_path).trim() !== ""
-                ? String(m.poster_path).startsWith("http")
-                  ? String(m.poster_path)
-                  : `https://image.tmdb.org/t/p/w500${m.poster_path}`
-                : m.poster_thumb && String(m.poster_thumb).trim() !== ""
-                ? String(m.poster_thumb)
-                : "/placeholder-poster.png";
-
-            return (
-              <MediaCard
-                key={key}
-                id={m.id}
-                title={displayTitle} // ✅ Pass the cleaned title to the component
-                category={m.category ?? ""}
-                image={image}
-                downloadLink={m.download_link ?? ""}
-                releaseYear={year}
-              />
-            );
-          })}
-        </div>
-      )}
+          return (
+            <MediaCard
+              key={m.id}
+              id={m.id}
+              title={m.title || m.name} 
+              category={category}
+              image={poster}
+              downloadLink="" // Passed as empty string to prevent breaking your current MediaCard
+              releaseYear={year}
+            />
+          );
+        })}
+      </div>
     </section>
   );
 
   return (
-    <main className="px-6 py-10">
-      <h1 className="text-3xl font-bold mb-6 text-purple-700">New on Moviewrld</h1>
+    <main className="min-h-screen bg-gray-950 px-4 md:px-8 pb-20">
+      {/* HERO SECTION */}
+      <section className="w-full max-w-7xl mx-auto mt-8 mb-16 rounded-2xl overflow-hidden shadow-2xl bg-gray-900 aspect-video relative">
+        {heroTrailerKey ? (
+          <iframe
+  className="w-full h-full object-cover pointer-events-none"
+  src={`https://www.youtube.com/embed/${heroTrailerKey}?autoplay=1&mute=1&playsinline=1&loop=1&playlist=${heroTrailerKey}&controls=0&showinfo=0&rel=0`}
+  title="Trailer"
+  allow="autoplay; encrypted-media; picture-in-picture"
+  allowFullScreen
+></iframe>
+        ) : heroMovie?.backdrop_path ? (
+          <img 
+            src={`https://image.tmdb.org/t/p/original${heroMovie.backdrop_path}`} 
+            alt={heroMovie.title}
+            className="w-full h-full object-cover opacity-60"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-500">
+            Trailer Unavailable
+          </div>
+        )}
+        
+        {/* Hero Overlay */}
+        <div className="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-gray-950 to-transparent">
+          <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-2 inline-block">
+            #1 Trending
+          </span>
+          <h2 className="text-4xl md:text-5xl font-black text-white mb-2 shadow-sm">
+            {heroMovie?.title || heroMovie?.name}
+          </h2>
+          <p className="text-gray-300 max-w-2xl line-clamp-2">
+            {heroMovie?.overview}
+          </p>
+        </div>
+      </section>
 
-      {section("New Movies", "movies", movies)}
-      {section("Trending Music", "music", songs)}
-      {section("Anime", "anime", anime)}
-      {section("Kdrama", "kdrama", kdrama)}
+      {/* HOLLYWOOD NEWS SECTION */}
+      <div className="max-w-7xl mx-auto mb-12">
+        <HomepageNews />
+      </div>
+
+      {/* RECOMMENDED GRIDS */}
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-3xl font-black text-white mb-10 border-b border-white/10 pb-4 uppercase tracking-widest">
+          Recommended (Must Watch)
+        </h2>
+        {renderSection("Movies", "movies", topMovies)}
+        {renderSection("Anime", "anime", topAnime)}
+        {renderSection("K-Drama", "kdrama", topKdrama)}
+      </div>
     </main>
   );
 }
