@@ -4,13 +4,16 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function SearchPage({
-  searchParams,
-}: {
-  searchParams: { q?: string; page?: string };
-}) {
-  const query = searchParams.q || "";
-  const currentPage = Number(searchParams.page) || 1;
+type PageProps = {
+  searchParams: Promise<{ q?: string; page?: string }>;
+};
+
+export default async function SearchPage({ searchParams }: PageProps) {
+  // ✅ Await searchParams for Next.js 15 compatibility
+  const resolvedSearchParams = await searchParams;
+  
+  const query = resolvedSearchParams.q || "";
+  const currentPage = Number(resolvedSearchParams.page) || 1;
 
   // If the user lands here without a query, return an empty state
   if (!query) {

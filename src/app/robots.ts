@@ -5,7 +5,11 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin/', '/private/'], // Hide any private dashboard routes
+      disallow: [
+        '/chisom/',     // Secures your specific admin portal and dashboard
+        '/api/',        // Prevents crawlers from hitting your backend data endpoints
+        '/_next/',      // Standard Next.js internal build files
+      ],
     },
     sitemap: 'https://moviewrld.com/sitemap.xml',
   }

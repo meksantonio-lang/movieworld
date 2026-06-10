@@ -2,17 +2,26 @@ import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 
+export const dynamic = "force-dynamic";
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default async function ArticlePage({ params }: { params: { slug: string } }) {
+type PageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+export default async function ArticlePage({ params }: PageProps) {
+  // ✅ Await the dynamic parameters to satisfy Next.js 15 async requirements
+  const resolvedParams = await params;
+
   // Fetch the specific article matching the URL slug
   const { data: article, error } = await supabase
     .from('news_feed')
     .select('*')
-    .eq('slug', params.slug)
+    .eq('slug', resolvedParams.slug)
     .single();
 
   if (error || !article) {
@@ -62,7 +71,6 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         {/* Article Content */}
         <div className="px-6 md:px-12 py-10">
           <div className="prose prose-invert prose-lg max-w-none text-gray-300">
-            {/* If content is missing, fallback to summary */}
             <p className="whitespace-pre-wrap leading-relaxed">
               {article.content || article.summary}
             </p>
