@@ -1,6 +1,7 @@
 import { getTrendingMovies, getTrendingAnime, getTrendingKDramas, getMediaTrailer } from "@/lib/tmdb";
 import MediaCard from "@/components/MediaCard";
 import HomepageNews from "@/components/HomepageNews";
+import AnimatedIntro from "@/components/AnimatedIntro";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ function SectionHeader({ title, category }: { title: string; category: string })
 }
 
 export default async function HomePage() {
-  // 1. Fetch live data from your new TMDB engine
+  // 1. Fetch live data from your TMDB engine
   const [movies, anime, kdrama] = await Promise.all([
     getTrendingMovies(),
     getTrendingAnime(),
@@ -52,7 +53,7 @@ export default async function HomePage() {
               title={m.title || m.name} 
               category={category}
               image={poster}
-              downloadLink="" // Passed as empty string to prevent breaking your current MediaCard
+              downloadLink="" 
               releaseYear={year}
             />
           );
@@ -63,37 +64,45 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-gray-950 px-4 md:px-8 pb-20">
-      {/* HERO SECTION */}
-      <section className="w-full max-w-7xl mx-auto mt-8 mb-16 rounded-2xl overflow-hidden shadow-2xl bg-gray-900 aspect-video relative">
-        {heroTrailerKey ? (
-          <iframe
-  className="w-full h-full object-cover pointer-events-none"
-  src={`https://www.youtube.com/embed/${heroTrailerKey}?autoplay=1&mute=1&playsinline=1&loop=1&playlist=${heroTrailerKey}&controls=0&showinfo=0&rel=0`}
-  title="Trailer"
-  allow="autoplay; encrypted-media; picture-in-picture"
-  allowFullScreen
-></iframe>
-        ) : heroMovie?.backdrop_path ? (
-          <img 
-            src={`https://image.tmdb.org/t/p/original${heroMovie.backdrop_path}`} 
-            alt={heroMovie.title}
-            className="w-full h-full object-cover opacity-60"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-500">
-            Trailer Unavailable
-          </div>
-        )}
+      
+      {/* CATCHY INTRO HEADER (Imported Client Component) */}
+      <AnimatedIntro />
+
+      {/* RESPONSIVE HERO SECTION */}
+      <section className="w-full max-w-7xl mx-auto mb-16 rounded-2xl overflow-hidden shadow-2xl bg-gray-900 flex flex-col md:relative md:aspect-video">
         
-        {/* Hero Overlay */}
-        <div className="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-gray-950 to-transparent">
-          <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-2 inline-block">
+        {/* Video Frame Holder */}
+        <div className="w-full aspect-video md:absolute md:inset-0 md:h-full">
+          {heroTrailerKey ? (
+            <iframe
+              className="w-full h-full object-cover pointer-events-none"
+              src={`https://www.youtube.com/embed/${heroTrailerKey}?autoplay=1&mute=1&playsinline=1&loop=1&playlist=${heroTrailerKey}&controls=0&showinfo=0&rel=0`}
+              title="Trailer"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          ) : heroMovie?.backdrop_path ? (
+            <img 
+              src={`https://image.tmdb.org/t/p/original${heroMovie.backdrop_path}`} 
+              alt={heroMovie.title}
+              className="w-full h-full object-cover opacity-60"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-500">
+              Trailer Unavailable
+            </div>
+          )}
+        </div>
+        
+        {/* Responsive Details Content Block */}
+        <div className="w-full p-6 bg-gray-900/90 border-t border-white/5 md:border-none md:p-8 md:bg-gradient-to-t md:from-gray-950 md:via-gray-950/70 md:to-transparent md:absolute md:bottom-0 md:left-0 md:z-10">
+          <span className="bg-purple-600 text-white text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-2 inline-block">
             #1 Trending
           </span>
-          <h2 className="text-4xl md:text-5xl font-black text-white mb-2 shadow-sm">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-2 line-clamp-1">
             {heroMovie?.title || heroMovie?.name}
           </h2>
-          <p className="text-gray-300 max-w-2xl line-clamp-2">
+          <p className="text-xs sm:text-sm text-gray-300 max-w-2xl line-clamp-2 md:line-clamp-3">
             {heroMovie?.overview}
           </p>
         </div>
