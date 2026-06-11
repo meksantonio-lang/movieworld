@@ -9,10 +9,11 @@ const supabase = createClient(
 
 export default async function HomepageNews() {
   // Fetch the top 3 latest HOLLYWOOD news items ONLY
+  // Notice we added 'cover_image' to the select query!
   const { data: news, error } = await supabase
     .from('news_feed')
-    .select('id, title, summary, image_url, category, slug, published_at')
-    .eq('category', 'Hollywood') // <-- This filter ensures no Anime slips through
+    .select('id, title, summary, image_url, cover_image, category, slug, published_at')
+    .eq('category', 'Hollywood') 
     .order('published_at', { ascending: false })
     .limit(3);
 
@@ -44,34 +45,39 @@ export default async function HomepageNews() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {news.map((item) => (
-          <Link href={`/feed/${item.slug}`} key={item.id} className="group cursor-pointer flex flex-col bg-purple-950/20 rounded-xl overflow-hidden border border-purple-900/50 hover:border-pink-500/50 transition-colors">
-            <div className="relative h-48 w-full bg-gray-900 overflow-hidden">
-              {item.image_url ? (
-                <img 
-                  src={item.image_url} 
-                  alt={item.title} 
-                  className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                />
-              ) : (
-                <div className="flex items-center justify-center w-full h-full text-purple-700 font-black text-xl uppercase tracking-widest">
-                  MovieWrld
+        {news.map((item) => {
+          // Smart fallback: Use cover_image first, then image_url, then null
+          const displayImage = item.cover_image || item.image_url;
+
+          return (
+            <Link href={`/feed/${item.slug}`} key={item.id} className="group cursor-pointer flex flex-col bg-purple-950/20 rounded-xl overflow-hidden border border-purple-900/50 hover:border-pink-500/50 transition-colors">
+              <div className="relative h-48 w-full bg-gray-900 overflow-hidden">
+                {displayImage ? (
+                  <img 
+                    src={displayImage} 
+                    alt={item.title} 
+                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full text-purple-700 font-black text-xl uppercase tracking-widest">
+                    MovieWrld
+                  </div>
+                )}
+                <div className="absolute top-3 left-3 bg-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
+                  {item.category}
                 </div>
-              )}
-              <div className="absolute top-3 left-3 bg-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
-                {item.category}
               </div>
-            </div>
-            <div className="p-5 flex flex-col flex-grow">
-              <h3 className="text-lg font-bold text-white leading-tight mb-2 group-hover:text-pink-400 transition-colors line-clamp-2">
-                {item.title}
-              </h3>
-              <p className="text-sm text-gray-400 line-clamp-2">
-                {item.summary}
-              </p>
-            </div>
-          </Link>
-        ))}
+              <div className="p-5 flex flex-col flex-grow">
+                <h3 className="text-lg font-bold text-white leading-tight mb-2 group-hover:text-pink-400 transition-colors line-clamp-2">
+                  {item.title}
+                </h3>
+                <p className="text-sm text-gray-400 line-clamp-2">
+                  {item.summary}
+                </p>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );

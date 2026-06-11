@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
+import RichTextEditor from "@/components/RichTextEditor";
 
 interface Comment {
   id: number;
@@ -45,9 +46,12 @@ export default function AdminDashboard() {
   const [newsSummary, setNewsSummary] = useState("");
   const [newsContent, setNewsContent] = useState("");
   const [newsCategory, setNewsCategory] = useState("Hollywood");
-  const [newsImageUrl, setNewsImageUrl] = useState("");
   const [isPublishingNews, setIsPublishingNews] = useState(false);
   const [newsMessage, setNewsMessage] = useState("");
+  
+  // New Image Upload State
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState("");
 
   // 1. Authenticate the User
   useEffect(() => {
@@ -141,11 +145,46 @@ export default function AdminDashboard() {
     }
   };
 
-  // 7. Publish Manual News Scoop
+  // Handle File Selection for Cover Image
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setCoverImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  // 7. Publish Manual News Scoop with Image Upload
   const handlePublishNews = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsPublishingNews(true);
     setNewsMessage("");
+
+    let finalImageUrl = null;
+
+    // Upload Image if one was selected
+    if (coverImageFile) {
+      const fileExt = coverImageFile.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}.${fileExt}`;
+      const filePath = `covers/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('news-images')
+        .upload(filePath, coverImageFile);
+
+      if (uploadError) {
+        setNewsMessage(`Image Upload Error: ${uploadError.message}`);
+        setIsPublishingNews(false);
+        return;
+      }
+
+      // Retrieve the public URL for the newly uploaded image
+      const { data: publicUrlData } = supabase.storage
+        .from('news-images')
+        .getPublicUrl(filePath);
+
+      finalImageUrl = publicUrlData.publicUrl;
+    }
 
     // Create a URL-friendly slug from the title
     const slug = newsTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Math.random().toString(36).substring(2, 7);
@@ -156,7 +195,8 @@ export default function AdminDashboard() {
       summary: newsSummary,
       content: newsContent,
       category: newsCategory,
-      image_url: newsImageUrl || null,
+      image_url: finalImageUrl, // Maintained for backward compatibility
+      cover_image: finalImageUrl, // New column
       source_type: 'Manual',
       published_at: new Date().toISOString()
     });
@@ -168,7 +208,8 @@ export default function AdminDashboard() {
       setNewsTitle("");
       setNewsSummary("");
       setNewsContent("");
-      setNewsImageUrl("");
+      setCoverImageFile(null);
+      setImagePreview("");
       fetchNewsItems(); // Refresh the list
       setTimeout(() => {
         setNewsMessage("");
@@ -385,9 +426,9 @@ export default function AdminDashboard() {
               <form onSubmit={handlePublishNews} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Headline</label>
-                    <input type="text" required value={newsTitle} onChange={(e) => setNewsTitle(e.target.value)} className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg border border-gray-800 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500 transition-colors" placeholder="e.g. Next Avengers Movie Announced" />
-                  </div>
+  <label className="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Full Story (Rich Text)</label>
+  <RichTextEditor value={newsContent} onChange={setNewsContent} />
+</div>
                   <div>
                     <label className="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Category</label>
                     <select value={newsCategory} onChange={(e) => setNewsCategory(e.target.value)} className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg border border-gray-800 focus:border-pink-500 focus:outline-none transition-colors">
@@ -399,9 +440,34 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
+                {/* THE NEW IMAGE DROPZONE */}
                 <div>
-                  <label className="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Image URL (Optional)</label>
-                  <input type="url" value={newsImageUrl} onChange={(e) => setNewsImageUrl(e.target.value)} className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg border border-gray-800 focus:border-pink-500 focus:outline-none transition-colors" placeholder="https://example.com/image.jpg" />
+                  <label className="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Cover Image (Upload)</label>
+                  <div className="flex items-center justify-center w-full">
+                    <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-800 border-dashed rounded-lg cursor-pointer bg-gray-900 hover:bg-gray-800 transition-colors relative overflow-hidden group">
+                      {imagePreview ? (
+                        <img src={imagePreview} alt="Cover Preview" className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <svg className="w-8 h-8 mb-4 text-gray-500 group-hover:text-pink-500 transition-colors" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                          </svg>
+                          <p className="mb-2 text-sm text-gray-400"><span className="font-bold text-pink-500">Click to upload</span> or drag and drop</p>
+                          <p className="text-xs text-gray-500 uppercase tracking-widest">PNG, JPG, WEBP</p>
+                        </div>
+                      )}
+                      <input type="file" className="hidden" accept="image/*" onChange={handleImageSelect} />
+                    </label>
+                  </div>
+                  {imagePreview && (
+                    <button 
+                      type="button" 
+                      onClick={() => { setCoverImageFile(null); setImagePreview(""); }} 
+                      className="mt-2 text-xs text-red-500 font-bold uppercase tracking-widest hover:text-red-400"
+                    >
+                      Remove Selected Image
+                    </button>
+                  )}
                 </div>
 
                 <div>
@@ -415,7 +481,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <button type="submit" disabled={isPublishingNews} className="w-full md:w-auto bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-8 rounded-lg transition-colors mt-2 disabled:opacity-50">
-                  {isPublishingNews ? "Publishing..." : "Publish to The Feed"}
+                  {isPublishingNews ? "Publishing & Uploading..." : "Publish to The Feed"}
                 </button>
               </form>
             </div>
