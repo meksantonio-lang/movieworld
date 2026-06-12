@@ -31,6 +31,10 @@ export default async function ArticlePage({ params }: PageProps) {
   // Determine the best cover image to show
   const displayImage = article.cover_image || article.image_url;
 
+  // Clean the text: Replace non-breaking spaces with normal spaces so words wrap naturally
+  const rawContent = article.content || article.summary || "";
+  const cleanContent = rawContent.replace(/&nbsp;/g, ' ');
+
   return (
     <main className="min-h-screen bg-black py-10 px-4 md:px-8">
       <article className="max-w-4xl mx-auto bg-purple-950/20 border border-purple-900/50 rounded-2xl overflow-hidden shadow-2xl">
@@ -74,11 +78,11 @@ export default async function ArticlePage({ params }: PageProps) {
         {/* Article Content */}
         <div className="px-6 md:px-12 py-10">
           
-          {/* THE UPGRADED RICH TEXT RENDERER */}
+         {/* THE UPGRADED RICH TEXT RENDERER */}
           <div 
-            className="prose prose-invert prose-lg max-w-none text-gray-300 
+            className="prose prose-invert prose-lg max-w-none text-gray-300 whitespace-pre-wrap
               [&_img]:w-full [&_img]:rounded-xl [&_img]:my-8 [&_img]:shadow-2xl [&_img]:border [&_img]:border-white/10"
-            dangerouslySetInnerHTML={{ __html: article.content || article.summary }}
+            dangerouslySetInnerHTML={{ __html: cleanContent }}
           />
 
           {/* Source Link for API-pulled articles */}
