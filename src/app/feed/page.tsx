@@ -12,9 +12,10 @@ const supabase = createClient(
 
 export default async function FeedPage() {
   // Fetch ONLY the first 12 news items for the initial, lightning-fast server render
+  // Notice we added 'cover_image' and 'source_type' to this query!
   const { data: initialNews, error } = await supabase
     .from('news_feed')
-    .select('id, title, summary, image_url, category, slug, published_at')
+    .select('id, title, summary, image_url, cover_image, source_type, category, slug, published_at')
     .order('published_at', { ascending: false })
     .limit(12);
 
