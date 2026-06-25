@@ -9,13 +9,10 @@ type PageProps = {
 };
 
 export default async function SearchPage({ searchParams }: PageProps) {
-  // ✅ Await searchParams for Next.js 15 compatibility
   const resolvedSearchParams = await searchParams;
-  
   const query = resolvedSearchParams.q || "";
   const currentPage = Number(resolvedSearchParams.page) || 1;
 
-  // If the user lands here without a query, return an empty state
   if (!query) {
     return (
       <main className="min-h-screen bg-gray-950 px-4 md:px-8 py-16 flex items-center justify-center">
@@ -24,14 +21,11 @@ export default async function SearchPage({ searchParams }: PageProps) {
     );
   }
 
-  // Fetch the search results
   const results = await searchMedia(query, currentPage);
 
   return (
     <main className="min-h-screen bg-gray-950 px-4 md:px-8 py-16">
       <div className="max-w-7xl mx-auto">
-        
-        {/* Header */}
         <div className="mb-12 border-b border-white/10 pb-6">
           <h1 className="text-3xl md:text-4xl font-black text-white uppercase tracking-widest mb-2">
             Search Results
@@ -41,7 +35,6 @@ export default async function SearchPage({ searchParams }: PageProps) {
           </p>
         </div>
         
-        {/* Results Grid */}
         {results.length === 0 ? (
           <div className="text-center py-20">
             <h2 className="text-2xl text-gray-500 font-bold mb-4">No results found for "{query}".</h2>
@@ -51,10 +44,14 @@ export default async function SearchPage({ searchParams }: PageProps) {
           <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {results.map((m: any) => {
               const year = m.release_date ? m.release_date.slice(0, 4) : m.first_air_date ? m.first_air_date.slice(0, 4) : "";
-              const poster = m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : "/placeholder.png";
               
-              // We need to pass the correct category to the MediaCard so the link works correctly
-              const linkCategory = m.media_type === "movie" ? "movies" : "anime"; // We default TV shows to the anime route visually for now
+              // Smart Image Fallback for the grid
+              const poster = m.poster_path 
+                ? `https://image.tmdb.org/t/p/w500${m.poster_path}` 
+                : "https://via.placeholder.com/500x750/111827/a855f7?text=No+Poster";
+              
+              // Route all TMDB results to the /movies/[id] dynamic page
+              const linkCategory = "movies"; 
 
               return (
                 <MediaCard
@@ -70,7 +67,6 @@ export default async function SearchPage({ searchParams }: PageProps) {
           </div>
         )}
 
-        {/* Pagination Controls (Only show if there are results) */}
         {results.length > 0 && (
           <div className="flex justify-center items-center gap-4 mt-16 border-t border-white/10 pt-10">
             {currentPage > 1 ? (
@@ -98,7 +94,6 @@ export default async function SearchPage({ searchParams }: PageProps) {
             </Link>
           </div>
         )}
-        
       </div>
     </main>
   );

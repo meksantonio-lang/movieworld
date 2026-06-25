@@ -1,0 +1,15 @@
+name: Daily News Sync
+
+# This tells GitHub to run this job automatically
+on:
+  schedule:
+    # Runs every day at midnight (UTC)
+    - cron: '0 0 * * *'
+  workflow_dispatch: # This adds a button so you can trigger it manually from GitHub if needed!
+
+jobs:
+  sync-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping MovieWrld API
+        run: curl -X GET https://moviewrld.com/api/sync-news
