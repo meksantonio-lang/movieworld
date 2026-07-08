@@ -81,3 +81,32 @@ export async function searchMedia(query: string, page: number = 1) {
   // Filter out actors/directors, we only want to show Movies and TV Shows
   return data.results.filter((item: any) => item.media_type === "movie" || item.media_type === "tv");
 }
+// ==========================================
+// MOOD-BASED RECOMMENDATIONS
+// ==========================================
+
+export async function getMediaByMood(mood: string) {
+  let genreIds = "";
+  
+  // Map moods to specific TMDB genre IDs
+  switch (mood.toLowerCase()) {
+    case "happy":
+      genreIds = "35,16,10751"; // Comedy, Animation, Family
+      break;
+    case "sad":
+      genreIds = "18,10752"; // Drama, War
+      break;
+    case "scary":
+      genreIds = "27,53,9648"; // Horror, Thriller, Mystery
+      break;
+    case "romantic":
+      genreIds = "10749"; // Romance
+      break;
+    default:
+      genreIds = "28,12"; // Action, Adventure (fallback)
+  }
+
+  // Fetch movies with these genres, sorted by popularity to ensure high-quality recommendations
+  const data = await fetchTMDB("/discover/movie", `&with_genres=${genreIds}&sort_by=popularity.desc&page=1`);
+  return data.results;
+}

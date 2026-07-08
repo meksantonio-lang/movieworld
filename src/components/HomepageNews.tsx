@@ -8,22 +8,22 @@ const supabase = createClient(
 );
 
 export default async function HomepageNews() {
-  // Fetch the top 3 latest HOLLYWOOD news items ONLY
-  // Notice we added 'cover_image' to the select query!
+  // Fetch the top 3 latest news items. 
+  // We use .or() to pull in Hollywood OR any post you manually created, prioritizing newest first!
   const { data: news, error } = await supabase
     .from('news_feed')
-    .select('id, title, summary, image_url, cover_image, category, slug, published_at')
-    .eq('category', 'Hollywood') 
+    .select('id, title, summary, image_url, cover_image, category, slug, published_at, is_manual_entry')
+    .or('category.eq.Hollywood,is_manual_entry.eq.true') 
     .order('published_at', { ascending: false })
     .limit(3);
 
-  // If no Hollywood news exists yet, we show a sleek fallback instead of crashing
+  // If no news exists yet, we show a sleek fallback instead of crashing
   if (error || !news || news.length === 0) {
     return (
       <section className="w-full max-w-7xl mx-auto px-4 py-8">
-        <h2 className="text-3xl font-bold text-white tracking-tight mb-6">Trending in Hollywood</h2>
+        <h2 className="text-3xl font-bold text-white tracking-tight mb-6">Trending News</h2>
         <div className="text-purple-400 bg-purple-950/20 p-6 rounded-xl border border-purple-900/50">
-          Waiting for the latest celebrity scoops... Run your sync API!
+          Waiting for the latest scoops... Run your sync API!
         </div>
       </section>
     );
@@ -33,8 +33,8 @@ export default async function HomepageNews() {
     <section className="w-full max-w-7xl mx-auto px-4 py-8">
       <div className="flex justify-between items-end mb-6">
         <div>
-          <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter">Trending</h2>
-          <p className="text-pink-400 font-medium tracking-wide mt-1">Latest from Hollywood</p>
+          <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter">Latest Scoops</h2>
+          <p className="text-pink-400 font-medium tracking-wide mt-1">From Hollywood & Beyond</p>
         </div>
         <Link 
           href="/feed" 
@@ -48,6 +48,9 @@ export default async function HomepageNews() {
         {news.map((item) => {
           // Smart fallback: Use cover_image first, then image_url, then null
           const displayImage = item.cover_image || item.image_url;
+          
+          // Determine if we need to show a special "Exclusive" badge for your manual posts
+          const isExclusive = item.is_manual_entry === true;
 
           return (
             <Link href={`/feed/${item.slug}`} key={item.id} className="group cursor-pointer flex flex-col bg-purple-950/20 rounded-xl overflow-hidden border border-purple-900/50 hover:border-pink-500/50 transition-colors">
@@ -63,8 +66,18 @@ export default async function HomepageNews() {
                     MovieWrld
                   </div>
                 )}
-                <div className="absolute top-3 left-3 bg-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
-                  {item.category}
+                
+                <div className="absolute top-3 left-3 flex flex-col gap-2">
+                  <span className="bg-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg w-max">
+                    {item.category}
+                  </span>
+                  
+                  {/* Highlight your manual posts visually! */}
+                  {isExclusive && (
+                     <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded w-max border border-purple-400/50">
+                       EXCLUSIVE
+                     </span>
+                  )}
                 </div>
               </div>
               <div className="p-5 flex flex-col flex-grow">
