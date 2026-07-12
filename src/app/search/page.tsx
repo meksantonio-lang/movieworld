@@ -43,15 +43,17 @@ export default async function SearchPage({ searchParams }: PageProps) {
         ) : (
           <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {results.map((m: any) => {
-              const year = m.release_date ? m.release_date.slice(0, 4) : m.first_air_date ? m.first_air_date.slice(0, 4) : "";
+              // Safe extraction to prevent 500 errors on null fields
+              const year = m.release_date?.substring(0, 4) || m.first_air_date?.substring(0, 4) || "";
               
               // Smart Image Fallback for the grid
               const poster = m.poster_path 
                 ? `https://image.tmdb.org/t/p/w500${m.poster_path}` 
                 : "https://via.placeholder.com/500x750/111827/a855f7?text=No+Poster";
               
-              // Route all TMDB results to the /movies/[id] dynamic page
-              const linkCategory = "movies"; 
+              // Dynamic category routing to prevent loading the wrong movie/TV show
+              const isMovie = m.media_type === "movie" || typeof m.release_date === "string" || (m.title && !m.name);
+              const linkCategory = isMovie ? "movies" : "anime"; 
 
               return (
                 <MediaCard
