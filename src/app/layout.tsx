@@ -3,6 +3,7 @@ import "@/app/globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { FavoritesProvider } from "@/context/FavoritesContext";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 // This is what Google and Social Media bots read
 export const metadata: Metadata = {
@@ -72,6 +73,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="flex-grow">{children}</main>
           <Footer />
         </FavoritesProvider>
+        
+        {/* ✅ Google Analytics 4 Integration */}
+        <GoogleAnalytics gaId="G-JN707ZE07C" />
       </body>
     </html>
   );
