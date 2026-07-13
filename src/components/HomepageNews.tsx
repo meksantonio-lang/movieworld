@@ -1,15 +1,12 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 export default async function HomepageNews() {
-  // Fetch the top 3 latest news items. 
-  // We use .or() to pull in Hollywood OR any post you manually created, prioritizing newest first!
   const { data: news, error } = await supabase
     .from('news_feed')
     .select('id, title, summary, image_url, cover_image, category, slug, published_at, is_manual_entry')
@@ -17,7 +14,6 @@ export default async function HomepageNews() {
     .order('published_at', { ascending: false })
     .limit(3);
 
-  // If no news exists yet, we show a sleek fallback instead of crashing
   if (error || !news || news.length === 0) {
     return (
       <section className="w-full max-w-7xl mx-auto px-4 py-8">
@@ -46,20 +42,19 @@ export default async function HomepageNews() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {news.map((item) => {
-          // Smart fallback: Use cover_image first, then image_url, then null
           const displayImage = item.cover_image || item.image_url;
-          
-          // Determine if we need to show a special "Exclusive" badge for your manual posts
           const isExclusive = item.is_manual_entry === true;
 
           return (
             <Link href={`/feed/${item.slug}`} key={item.id} className="group cursor-pointer flex flex-col bg-purple-950/20 rounded-xl overflow-hidden border border-purple-900/50 hover:border-pink-500/50 transition-colors">
-              <div className="relative h-48 w-full bg-gray-900 overflow-hidden">
+              {/* FIXED: Increased height to h-64 for better vertical support */}
+              <div className="relative h-64 w-full bg-gray-950 overflow-hidden flex items-center justify-center">
                 {displayImage ? (
+                  /* FIXED: Swapped object-cover for object-contain to stop cropping */
                   <img 
                     src={displayImage} 
                     alt={item.title} 
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                    className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
                   <div className="flex items-center justify-center w-full h-full text-purple-700 font-black text-xl uppercase tracking-widest">
@@ -67,12 +62,11 @@ export default async function HomepageNews() {
                   </div>
                 )}
                 
-                <div className="absolute top-3 left-3 flex flex-col gap-2">
+                <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
                   <span className="bg-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg w-max">
                     {item.category}
                   </span>
                   
-                  {/* Highlight your manual posts visually! */}
                   {isExclusive && (
                      <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded w-max border border-purple-400/50">
                        EXCLUSIVE
