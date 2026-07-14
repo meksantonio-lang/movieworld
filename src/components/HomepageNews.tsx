@@ -7,10 +7,10 @@ const supabase = createClient(
 );
 
 export default async function HomepageNews() {
+  // Removed the category filter so it grabs the absolute latest 3 scoops across all categories!
   const { data: news, error } = await supabase
     .from('news_feed')
     .select('id, title, summary, image_url, cover_image, category, slug, published_at, is_manual_entry')
-    .or('category.eq.Hollywood,is_manual_entry.eq.true') 
     .order('published_at', { ascending: false })
     .limit(3);
 
@@ -47,10 +47,8 @@ export default async function HomepageNews() {
 
           return (
             <Link href={`/feed/${item.slug}`} key={item.id} className="group cursor-pointer flex flex-col bg-purple-950/20 rounded-xl overflow-hidden border border-purple-900/50 hover:border-pink-500/50 transition-colors">
-              {/* FIXED: Increased height to h-64 for better vertical support */}
               <div className="relative h-64 w-full bg-gray-950 overflow-hidden flex items-center justify-center">
                 {displayImage ? (
-                  /* FIXED: Swapped object-cover for object-contain to stop cropping */
                   <img 
                     src={displayImage} 
                     alt={item.title} 
