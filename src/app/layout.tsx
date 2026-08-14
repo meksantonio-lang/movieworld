@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import "@/app/globals.css"; 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import StickyBanner from "@/components/StickyBanner";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import { GoogleAnalytics } from '@next/third-parties/google';
-import Script from 'next/script';
 
 // This is what Google and Social Media bots read
 export const metadata: Metadata = {
@@ -67,7 +67,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      {/* Added flex layout to ensure the footer always sticks to the bottom */}
       <body className="bg-gray-950 text-white antialiased flex flex-col min-h-screen">
         <FavoritesProvider>
           <Navbar />
@@ -78,15 +77,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* ✅ Google Analytics 4 Integration */}
         <GoogleAnalytics gaId="G-JN707ZE07C" />
 
-        {/* ✅ Adsterra Global Ad Scripts */}
-        <Script 
-          src="https://pl30640394.effectivecpmnetwork.com/ba/81/14/ba81146c51ca2e5e8d38467633e63d87.js"
-          strategy="lazyOnload"
-        />
-        <Script 
-          src="https://pl30640395.effectivecpmnetwork.com/09/78/14/097814cb09744f488752a27098a2cb2d.js"
-          strategy="lazyOnload"
-        />
+        {/* ✅ Sticky Bottom Ad Banner (Mobile & Desktop Responsive) */}
+        <StickyBanner />
       </body>
     </html>
   );
