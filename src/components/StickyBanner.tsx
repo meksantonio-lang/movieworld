@@ -4,55 +4,49 @@ import { useEffect, useRef, useState } from "react";
 
 export default function StickyBanner() {
   const [isVisible, setIsVisible] = useState(true);
-  const mobileRef = useRef<HTMLDivElement>(null);
-  const desktopRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // 1. Inject Mobile 320x50 Banner
-    if (mobileRef.current && !mobileRef.current.firstChild) {
-      const confScript = document.createElement("script");
-      confScript.type = "text/javascript";
-      confScript.innerHTML = `
-        atOptions = {
-          'key' : 'f3de3527c1d5e220adfa0eef953be05f',
-          'format' : 'iframe',
-          'height' : 50,
-          'width' : 320,
-          'params' : {}
+    // 1. Ensure we only run this on the client side
+    if (typeof window === "undefined" || !containerRef.current) return;
+    
+    // 2. Prevent the script from injecting twice during React strict mode rendering
+    if (containerRef.current.firstChild) return;
+
+    // 3. Measure the screen width using JS, NOT CSS!
+    const isMobile = window.innerWidth < 768;
+
+    // 4. Set the proper Adsterra config based on the screen size
+    const adConfig = isMobile 
+      ? {
+          key: 'f3de3527c1d5e220adfa0eef953be05f',
+          format: 'iframe',
+          height: 50,
+          width: 320,
+          params: {}
+        }
+      : {
+          key: '79979a3e7fbae58ac091d620c45ee5e5',
+          format: 'iframe',
+          height: 90,
+          width: 728,
+          params: {}
         };
-      `;
 
-      const invokeScript = document.createElement("script");
-      invokeScript.type = "text/javascript";
-      invokeScript.src =
-        "https://www.highperformanceformat.com/f3de3527c1d5e220adfa0eef953be05f/invoke.js";
+    // 5. Inject the Configuration Script
+    const confScript = document.createElement("script");
+    confScript.type = "text/javascript";
+    confScript.innerHTML = `atOptions = ${JSON.stringify(adConfig)};`;
 
-      mobileRef.current.appendChild(confScript);
-      mobileRef.current.appendChild(invokeScript);
-    }
+    // 6. Inject the Adsterra Invocation Script
+    const invokeScript = document.createElement("script");
+    invokeScript.type = "text/javascript";
+    invokeScript.src = `https://www.highperformanceformat.com/${adConfig.key}/invoke.js`;
 
-    // 2. Inject Desktop 728x90 Banner
-    if (desktopRef.current && !desktopRef.current.firstChild) {
-      const confScript = document.createElement("script");
-      confScript.type = "text/javascript";
-      confScript.innerHTML = `
-        atOptions = {
-          'key' : '79979a3e7fbae58ac091d620c45ee5e5',
-          'format' : 'iframe',
-          'height' : 90,
-          'width' : 728,
-          'params' : {}
-        };
-      `;
+    // 7. Append to our single visible container
+    containerRef.current.appendChild(confScript);
+    containerRef.current.appendChild(invokeScript);
 
-      const invokeScript = document.createElement("script");
-      invokeScript.type = "text/javascript";
-      invokeScript.src =
-        "https://www.highperformanceformat.com/79979a3e7fbae58ac091d620c45ee5e5/invoke.js";
-
-      desktopRef.current.appendChild(confScript);
-      desktopRef.current.appendChild(invokeScript);
-    }
   }, []);
 
   if (!isVisible) return null;
@@ -71,11 +65,12 @@ export default function StickyBanner() {
         </svg>
       </button>
 
-      {/* Mobile 320x50 Container */}
-      <div className="block md:hidden min-h-[50px] min-w-[320px]" ref={mobileRef} />
-
-      {/* Desktop 728x90 Container */}
-      <div className="hidden md:block min-h-[90px] min-w-[728px]" ref={desktopRef} />
+      {/* Single Dynamic Ad Container - No display: none CSS used! */}
+      <div 
+        ref={containerRef} 
+        className="flex items-center justify-center overflow-hidden" 
+        style={{ minHeight: '50px' }}
+      />
     </aside>
   );
 }
