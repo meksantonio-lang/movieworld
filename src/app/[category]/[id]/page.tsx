@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import BookmarkButton from "@/components/BookmarkButton";
-import { getMediaDetails, getMediaCast, getMediaTrailer } from "@/lib/tmdb";
+import { getMediaDetails, getMediaCast, getMediaTrailer,} from "@/lib/tmdb";
 import { supabase } from "@/lib/supabaseClient";
 import LikeButton from "@/components/LikeButton";
 import CommentSection from "@/components/CommentSection";
+import WhereToWatch from "@/components/WhereToWatch";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const tmdbType = resolvedParams.category === "movies" ? "movie" : "tv";
   const mediaId = Number(resolvedParams.id);
 
-  // Fetch just the details for the SEO card
   const details = await getMediaDetails(tmdbType, mediaId);
   
   if (!details) {
@@ -26,12 +26,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
-  // Format title and image for the card
   const title = details.title || details.name;
   const description = details.overview || "Check out this title on Moviewrld!";
   const posterUrl = details.poster_path 
     ? `https://image.tmdb.org/t/p/w500${details.poster_path}` 
-    : "https://moviewrld.com/Logo.png"; // Fallback to your main logo if no poster exists
+    : "https://moviewrld.com/Logo.png";
 
   return {
     title: `${title} | Moviewrld`,
@@ -66,7 +65,7 @@ export default async function MediaPage({ params }: PageProps) {
   const tmdbType = resolvedParams.category === "movies" ? "movie" : "tv";
   const mediaId = Number(resolvedParams.id);
 
-  // 1. Fetch all TMDB data AND your Supabase admin review concurrently
+  // 1. Fetch TMDB data, Watch Providers, and Supabase review concurrently on server
   const [details, cast, trailerKey, adminReviewResult] = await Promise.all([
     getMediaDetails(tmdbType, mediaId),
     getMediaCast(tmdbType, mediaId),
@@ -79,14 +78,10 @@ export default async function MediaPage({ params }: PageProps) {
   // 2. Format details
   const title = details.title || details.name;
   const year = details.release_date ? details.release_date.slice(0, 4) : details.first_air_date?.slice(0, 4);
-  const runtime = details.runtime ? `${details.runtime} min` : details.episode_run_time?.[0] ? `${details.episode_run_time[0]} min / ep` : "TBA";
   const backdrop = details.backdrop_path ? `https://image.tmdb.org/t/p/original${details.backdrop_path}` : null;
   const poster = details.poster_path ? `https://image.tmdb.org/t/p/w500${details.poster_path}` : "/placeholder.png";
-
-  // Map genres if available from TMDB response
   const genres = details.genres ? details.genres.map((g: any) => g.name) : [];
 
-  // Map the top 5 cast members into structural objects for Google's bot
   const structuredActors = cast && cast.length > 0 
     ? cast.slice(0, 5).map((actor: any) => ({
         "@type": "PerformanceRole",
@@ -142,7 +137,6 @@ export default async function MediaPage({ params }: PageProps) {
 
           {/* DETAILS & LIKE BUTTON */}
           <div className="flex flex-col justify-end pt-4 md:pt-16">
-            {/* INTERACTIVE BUTTONS */}
             <div className="flex flex-wrap items-center gap-4 mb-8">
               <LikeButton mediaId={mediaId} />
               <BookmarkButton 
@@ -160,14 +154,15 @@ export default async function MediaPage({ params }: PageProps) {
               {title}
             </h1>
 
-            <div className="mb-8">
-              <LikeButton mediaId={mediaId} />
-            </div>
-
             <p className="text-gray-300 text-lg leading-relaxed max-w-3xl mb-8">
               {details.overview || "No synopsis available for this title."}
             </p>
           </div>
+        </div>
+
+        {/* 🎬 WHERE TO WATCH (AMAZON AFFILIATE) */}
+        <div className="mt-16">
+          <WhereToWatch movieTitle={title} />
         </div>
 
         {/* ⭐ MOVIEWRLD CRITIC REVIEW */}

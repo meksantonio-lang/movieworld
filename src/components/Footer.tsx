@@ -15,6 +15,7 @@ export default function Footer() {
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
               Your ultimate hub for ratings, reviews, and trending trailers across Movies, Anime, and K-Dramas.
+              Powered by TMDB
             </p>
           </div>
 
@@ -76,3 +77,9 @@ export default function Footer() {
     </footer>
   );
 }
+<div className="mt-8 pt-8 border-t border-white/10 text-center">
+  <p className="text-xs text-gray-500 max-w-3xl mx-auto leading-relaxed">
+    As an Amazon Associate I earn from qualifying purchases. 
+    MovieWrld is a participant in the Amazon Services LLC Associates Program, an affiliate advertising program designed to provide a means for sites to earn advertising fees by advertising and linking to Amazon.com.
+  </p>
+</div>

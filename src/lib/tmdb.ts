@@ -110,3 +110,30 @@ export async function getMediaByMood(mood: string) {
   const data = await fetchTMDB("/discover/movie", `&with_genres=${genreIds}&sort_by=popularity.desc&page=1`);
   return data.results;
 }
+export async function getMediaWatchProviders(type: "movie" | "tv", id: number) {
+  try {
+    const apiKey = process.env.TMDB_API_KEY || process.env.NEXT_PUBLIC_TMDB_API_KEY;
+    const token = process.env.TMDB_ACCESS_TOKEN;
+
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const url = token
+      ? `https://api.themoviedb.org/3/${type}/${id}/watch/providers`
+      : `https://api.themoviedb.org/3/${type}/${id}/watch/providers?api_key=${apiKey}`;
+
+    const res = await fetch(url, { next: { revalidate: 86400 } }); // Cache for 24 hours
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    return data.results || null;
+  } catch (error) {
+    console.error("Error fetching watch providers:", error);
+    return null;
+  }
+}

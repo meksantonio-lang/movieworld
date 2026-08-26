@@ -40,7 +40,6 @@ export default function AnimatedIntro() {
       >
         Find, rate, like and comment on the latest trending Movies, Anime, and K-Dramas on the go.
         Give your thoughts to the world. Your one-stop destination for all things entertainment.
-        Powered by TMDB's live data.
       </p>
     </div>
   );
