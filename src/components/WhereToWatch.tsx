@@ -1,12 +1,24 @@
 "use client";
 
-export default function WhereToWatch({ movieTitle }: { movieTitle: string }) {
+export default function WhereToWatch({ 
+  movieTitle, 
+  releaseYear, 
+  topActor 
+}: { 
+  movieTitle: string;
+  releaseYear?: string;
+  topActor?: string;
+}) {
   const AMAZON_TAG = "moviewrld-20";
 
-  // encodeURIComponent ensures spaces in titles (like "Spider-Man: No Way Home") don't break the URL
-  const searchKeyword = encodeURIComponent(movieTitle);
+  // 1. Combine the title, year, and actor into one highly specific search string
+  // filter(Boolean) automatically removes the year or actor if they happen to be missing
+  const preciseQuery = [movieTitle, releaseYear, topActor].filter(Boolean).join(" ");
   
-  // The universal Amazon Prime Video affiliate link
+  // 2. Encode the string so spaces become valid URL characters
+  const searchKeyword = encodeURIComponent(preciseQuery);
+  
+  // 3. The upgraded universal Amazon Prime Video affiliate link
   const amazonUrl = `https://www.amazon.com/s?k=${searchKeyword}&i=instant-video&tag=${AMAZON_TAG}`;
 
   return (

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import BookmarkButton from "@/components/BookmarkButton";
-import { getMediaDetails, getMediaCast, getMediaTrailer,} from "@/lib/tmdb";
+import { getMediaDetails, getMediaCast, getMediaTrailer } from "@/lib/tmdb";
 import { supabase } from "@/lib/supabaseClient";
 import LikeButton from "@/components/LikeButton";
 import CommentSection from "@/components/CommentSection";
@@ -65,7 +65,7 @@ export default async function MediaPage({ params }: PageProps) {
   const tmdbType = resolvedParams.category === "movies" ? "movie" : "tv";
   const mediaId = Number(resolvedParams.id);
 
-  // 1. Fetch TMDB data, Watch Providers, and Supabase review concurrently on server
+  // 1. Fetch TMDB data and Supabase review concurrently on server
   const [details, cast, trailerKey, adminReviewResult] = await Promise.all([
     getMediaDetails(tmdbType, mediaId),
     getMediaCast(tmdbType, mediaId),
@@ -77,10 +77,18 @@ export default async function MediaPage({ params }: PageProps) {
 
   // 2. Format details
   const title = details.title || details.name;
-  const year = details.release_date ? details.release_date.slice(0, 4) : details.first_air_date?.slice(0, 4);
+  
+  // Extract specific date and runtime info
+  const fullReleaseDate = details.release_date || details.first_air_date || "Unknown Date";
+  const year = fullReleaseDate !== "Unknown Date" ? fullReleaseDate.slice(0, 4) : "";
+  const runtime = details.runtime ? `${details.runtime} min` : details.episode_run_time?.[0] ? `${details.episode_run_time[0]} min / ep` : "TBA";
+  
   const backdrop = details.backdrop_path ? `https://image.tmdb.org/t/p/original${details.backdrop_path}` : null;
   const poster = details.poster_path ? `https://image.tmdb.org/t/p/w500${details.poster_path}` : "/placeholder.png";
   const genres = details.genres ? details.genres.map((g: any) => g.name) : [];
+
+  // Grab the lead actor (first person in the cast array) to tighten the Amazon search
+  const leadActor = cast && cast.length > 0 ? cast[0].name : undefined;
 
   const structuredActors = cast && cast.length > 0 
     ? cast.slice(0, 5).map((actor: any) => ({
@@ -150,9 +158,30 @@ export default async function MediaPage({ params }: PageProps) {
               />
             </div>
             
-            <h1 className="text-4xl md:text-6xl font-black text-white mb-6 drop-shadow-md">
+            <h1 className="text-4xl md:text-6xl font-black text-white mb-4 drop-shadow-md">
               {title}
             </h1>
+
+            {/* 📊 NEW RELEASE DATE & RUNTIME BADGES */}
+            <div className="flex flex-wrap items-center gap-3 mb-6 text-sm font-medium text-gray-300">
+              {fullReleaseDate !== "Unknown Date" && (
+                <span className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full shadow-inner">
+                  <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  {fullReleaseDate}
+                </span>
+              )}
+              {runtime !== "TBA" && (
+                <span className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full shadow-inner">
+                  <svg className="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  {runtime}
+                </span>
+              )}
+              {genres && genres.length > 0 && (
+                <span className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full shadow-inner">
+                  {genres[0]}
+                </span>
+              )}
+            </div>
 
             <p className="text-gray-300 text-lg leading-relaxed max-w-3xl mb-8">
               {details.overview || "No synopsis available for this title."}
@@ -160,9 +189,9 @@ export default async function MediaPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* 🎬 WHERE TO WATCH (AMAZON AFFILIATE) */}
+        {/* 🎬 WHERE TO WATCH (SMART AMAZON AFFILIATE SEARCH) */}
         <div className="mt-16">
-          <WhereToWatch movieTitle={title} />
+          <WhereToWatch movieTitle={title} releaseYear={year} topActor={leadActor} />
         </div>
 
         {/* ⭐ MOVIEWRLD CRITIC REVIEW */}

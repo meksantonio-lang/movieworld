@@ -34,16 +34,16 @@ export default function Footer() {
             <h4 className="text-white font-bold uppercase tracking-widest mb-4">Connect With Us</h4>
             <div className="flex items-center gap-4">
               <a 
-  href="https://facebook.com/moviewrld101" 
-  target="_blank" 
-  rel="noopener noreferrer"
-  className="text-gray-400 hover:text-pink-500 transition-colors duration-300 transform hover:scale-110"
-  aria-label="Follow MovieWrld on Facebook"
->
-  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
-  </svg>
-</a>
+                href="https://facebook.com/moviewrld101" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-pink-500 transition-colors duration-300 transform hover:scale-110"
+                aria-label="Follow MovieWrld on Facebook"
+              >
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
+                </svg>
+              </a>
               {/* Gmail Icon */}
               <a href="moviewrld.com@gmail.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-purple-400 transition-transform hover:scale-110">
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
@@ -73,13 +73,15 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Amazon Affiliate Disclosure */}
+        <div className="mt-8 pt-8 border-t border-white/10 text-center">
+          <p className="text-xs text-gray-500 max-w-3xl mx-auto leading-relaxed">
+            As an Amazon Associate I earn from qualifying purchases. 
+            MovieWrld is a participant in the Amazon Services LLC Associates Program, an affiliate advertising program designed to provide a means for sites to earn advertising fees by advertising and linking to Amazon.com.
+          </p>
+        </div>
+
       </div>
     </footer>
   );
 }
-<div className="mt-8 pt-8 border-t border-white/10 text-center">
-  <p className="text-xs text-gray-500 max-w-3xl mx-auto leading-relaxed">
-    As an Amazon Associate I earn from qualifying purchases. 
-    MovieWrld is a participant in the Amazon Services LLC Associates Program, an affiliate advertising program designed to provide a means for sites to earn advertising fees by advertising and linking to Amazon.com.
-  </p>
-</div>
