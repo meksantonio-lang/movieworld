@@ -54,6 +54,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        {/* ✅ Impact Radius Site Verification */}
+        <meta name="impact-site-verification" content="08143a11-f1e4-42eb-82c4-6c2900a73f67" />
+
         {/* ✅ JSON-LD Organization Schema for Google */}
         <script
           type="application/ld+json"
