@@ -425,10 +425,18 @@ export default function AdminDashboard() {
               
               <form onSubmit={handlePublishNews} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {/* NEW TITLE INPUT */}
                   <div>
-  <label className="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Full Story (Rich Text)</label>
-  <RichTextEditor value={newsContent} onChange={setNewsContent} />
-</div>
+                    <label className="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Scoop Title</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={newsTitle} 
+                      onChange={(e) => setNewsTitle(e.target.value)} 
+                      className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg border border-gray-800 focus:border-pink-500 focus:outline-none transition-colors" 
+                      placeholder="e.g. Breaking: New Matrix Movie Announced" 
+                    />
+                  </div>
                   <div>
                     <label className="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Category</label>
                     <select value={newsCategory} onChange={(e) => setNewsCategory(e.target.value)} className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg border border-gray-800 focus:border-pink-500 focus:outline-none transition-colors">
@@ -440,7 +448,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* THE NEW IMAGE DROPZONE */}
+                {/* THE IMAGE DROPZONE */}
                 <div>
                   <label className="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Cover Image (Upload)</label>
                   <div className="flex items-center justify-center w-full">
@@ -475,9 +483,10 @@ export default function AdminDashboard() {
                   <input type="text" required value={newsSummary} onChange={(e) => setNewsSummary(e.target.value)} className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg border border-gray-800 focus:border-pink-500 focus:outline-none transition-colors" placeholder="A quick one-sentence hook..." />
                 </div>
 
+                {/* RICH TEXT EDITOR (Fixed Duplicate) */}
                 <div>
-                  <label className="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Full Story (Paragraphs)</label>
-                  <textarea required value={newsContent} onChange={(e) => setNewsContent(e.target.value)} rows={8} className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg border border-gray-800 focus:border-pink-500 focus:outline-none transition-colors resize-y" placeholder="Write your full article here..."></textarea>
+                  <label className="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Full Story (Rich Text)</label>
+                  <RichTextEditor value={newsContent} onChange={setNewsContent} />
                 </div>
 
                 <button type="submit" disabled={isPublishingNews} className="w-full md:w-auto bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-8 rounded-lg transition-colors mt-2 disabled:opacity-50">
