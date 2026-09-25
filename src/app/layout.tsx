@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import "@/app/globals.css"; 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import StickyBanner from "@/components/StickyBanner";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import { GoogleAnalytics } from '@next/third-parties/google';
 
@@ -54,6 +53,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        {/* ✅ Google AdSense Verification Script (Replace ca-pub-XXXXXXXXXXXXXXXX with your publisher ID) */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+          crossOrigin="anonymous"
+        />
+
         {/* ✅ Impact Radius Site Verification */}
         <meta name="impact-site-verification" content="08143a11-f1e4-42eb-82c4-6c2900a73f67" />
 
@@ -79,9 +85,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         
         {/* ✅ Google Analytics 4 Integration */}
         <GoogleAnalytics gaId="G-JN707ZE07C" />
-
-        {/* ✅ Sticky Bottom Ad Banner (Mobile & Desktop Responsive) */}
-        <StickyBanner />
       </body>
     </html>
   );
