@@ -53,10 +53,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        {/* ✅ Google AdSense Verification Script (Replace ca-pub-XXXXXXXXXXXXXXXX with your publisher ID) */}
+        {/* ✅ Google AdSense Verification Script */}
         <script
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1496050599454972"
           crossOrigin="anonymous"
         />
 
