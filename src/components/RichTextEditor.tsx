@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useEffect, useRef } from "react";
 // 1. Updated the CSS import to the new package
 import "react-quill-new/dist/quill.snow.css"; 
 
@@ -20,6 +21,28 @@ interface RichTextEditorProps {
 }
 
 export default function RichTextEditor({ value, onChange }: RichTextEditorProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    // 3. Watch the DOM for the dynamic Quill toolbar injection
+    const observer = new MutationObserver(() => {
+      // Find all buttons inside the rich text editor
+      const buttons = containerRef.current?.querySelectorAll("button");
+      buttons?.forEach((btn) => {
+        // Force them to be standard buttons so they don't submit the form
+        if (btn.type !== "button") {
+          btn.type = "button";
+        }
+      });
+    });
+
+    observer.observe(containerRef.current, { childList: true, subtree: true });
+
+    return () => observer.disconnect();
+  }, []);
+
   const modules = {
     toolbar: [
       [{ header: [2, 3, false] }],
@@ -31,7 +54,10 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
   };
 
   return (
-    <div className="bg-gray-100 rounded-lg overflow-hidden text-gray-900 border border-gray-800 focus-within:ring-2 focus-within:ring-pink-500 transition-all">
+    <div 
+      ref={containerRef} 
+      className="bg-gray-100 rounded-lg overflow-hidden text-gray-900 border border-gray-800 focus-within:ring-2 focus-within:ring-pink-500 transition-all"
+    >
       <QuillNoSSRWrapper
         theme="snow"
         value={value}
