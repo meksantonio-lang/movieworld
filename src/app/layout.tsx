@@ -8,18 +8,24 @@ import { GoogleAnalytics } from '@next/third-parties/google';
 // This is what Google and Social Media bots read
 export const metadata: Metadata = {
   metadataBase: new URL("https://moviewrld.com"),
-  title: "MovieWorld 🌍 | Ratings, Reviews, Trailers & News",
+  title: "MovieWrld 🌍 | Ratings, Reviews, Trailers & News",
   description:
-    "Your ultimate hub for trending movies, anime, and K-dramas. Watch official trailers, read the latest Hollywood and anime news, drop reviews, and explore cast details.",
+    "Your ultimate hub for trending movies, anime, and K-dramas. Watch official trailers, join the community of movie lovers and read the latest Hollywood and anime news, drop reviews, explore cast details, and get movie recommendations based on your mood and preferences.",
   keywords: [
     "Movies",
     "Anime",
     "K-Drama",
     "Movie Reviews",
+    "Movie Ratings",
+    "Movie Recommendations",
+    "Movie News",
+    "Movie Cast",
+    "Movie Details",
     "Trailers",
     "Entertainment News",
     "Hollywood Gossip",
-    "MovieWorld",
+    "MovieWrld",
+    "Moviewrld",
     "Ratings",
   ],
   icons: {
