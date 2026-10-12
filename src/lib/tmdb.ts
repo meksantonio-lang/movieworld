@@ -34,12 +34,30 @@ export async function getTrendingMovies(page: number = 1) {
 }
 
 export async function getTrendingAnime(page: number = 1) {
-  const data = await fetchTMDB("/discover/tv", `&with_original_language=ja&with_genres=16&sort_by=popularity.desc&page=${page}`);
+  // Calculates a cutoff date 18 months in the past dynamically
+  const cutoffDate = new Date();
+  cutoffDate.setMonth(cutoffDate.getMonth() - 18);
+  const formattedCutoff = cutoffDate.toISOString().split("T")[0];
+
+  // Filters for recent Japanese animation with genuine audience traction
+  const data = await fetchTMDB(
+    "/discover/tv",
+    `&with_original_language=ja&with_genres=16&first_air_date.gte=${formattedCutoff}&vote_count.gte=25&sort_by=popularity.desc&page=${page}`
+  );
   return data.results;
 }
 
 export async function getTrendingKDramas(page: number = 1) {
-  const data = await fetchTMDB("/discover/tv", `&with_original_language=ko&sort_by=popularity.desc&page=${page}`);
+  // Calculates a cutoff date 18 months in the past dynamically
+  const cutoffDate = new Date();
+  cutoffDate.setMonth(cutoffDate.getMonth() - 18);
+  const formattedCutoff = cutoffDate.toISOString().split("T")[0];
+
+  // Enforces Korean language, Drama genre (18), recent air dates, and minimum votes to eliminate variety/talk shows
+  const data = await fetchTMDB(
+    "/discover/tv",
+    `&with_original_language=ko&with_genres=18&without_genres=10767,10763&first_air_date.gte=${formattedCutoff}&vote_count.gte=15&sort_by=popularity.desc&page=${page}`
+  );
   return data.results;
 }
 
@@ -48,39 +66,34 @@ export async function getTrendingKDramas(page: number = 1) {
 // ==========================================
 
 export async function getMediaDetails(type: "movie" | "tv", id: string | number) {
-  // Fetches synopsis, runtime, genres, and high-res posters
   return await fetchTMDB(`/${type}/${id}`);
 }
 
 export async function getMediaCast(type: "movie" | "tv", id: string | number) {
-  // Fetches the cast list and character names
   const data = await fetchTMDB(`/${type}/${id}/credits`);
-  // Return only the top 10 cast members to keep the UI clean
   return data.cast.slice(0, 10);
 }
 
 export async function getMediaTrailer(type: "movie" | "tv", id: string | number) {
-  // Fetches all connected videos, filters specifically for official YouTube trailers
   const data = await fetchTMDB(`/${type}/${id}/videos`);
   const trailer = data.results.find(
     (video: any) => video.site === "YouTube" && video.type === "Trailer" && video.official
   );
   
-  // Returns the YouTube embed key (e.g., 'dQw4w9WgXcQ') or null if no trailer exists
   return trailer ? trailer.key : null;
 }
+
 // ==========================================
 // SEARCH ENGINE
 // ==========================================
 
 export async function searchMedia(query: string, page: number = 1) {
-  // We use URLSearchParams to safely encode the user's search query (e.g. spaces become %20)
   const encodedQuery = encodeURIComponent(query);
   const data = await fetchTMDB("/search/multi", `&query=${encodedQuery}&page=${page}&include_adult=false`);
   
-  // Filter out actors/directors, we only want to show Movies and TV Shows
   return data.results.filter((item: any) => item.media_type === "movie" || item.media_type === "tv");
 }
+
 // ==========================================
 // MOOD-BASED RECOMMENDATIONS
 // ==========================================
@@ -88,28 +101,27 @@ export async function searchMedia(query: string, page: number = 1) {
 export async function getMediaByMood(mood: string) {
   let genreIds = "";
   
-  // Map moods to specific TMDB genre IDs
   switch (mood.toLowerCase()) {
     case "happy":
-      genreIds = "35,16,10751"; // Comedy, Animation, Family
+      genreIds = "35,16,10751";
       break;
     case "sad":
-      genreIds = "18,10752"; // Drama, War
+      genreIds = "18,10752";
       break;
     case "scary":
-      genreIds = "27,53,9648"; // Horror, Thriller, Mystery
+      genreIds = "27,53,9648";
       break;
     case "romantic":
-      genreIds = "10749"; // Romance
+      genreIds = "10749";
       break;
     default:
-      genreIds = "28,12"; // Action, Adventure (fallback)
+      genreIds = "28,12";
   }
 
-  // Fetch movies with these genres, sorted by popularity to ensure high-quality recommendations
   const data = await fetchTMDB("/discover/movie", `&with_genres=${genreIds}&sort_by=popularity.desc&page=1`);
   return data.results;
 }
+
 export async function getMediaWatchProviders(type: "movie" | "tv", id: number) {
   try {
     const apiKey = process.env.TMDB_API_KEY || process.env.NEXT_PUBLIC_TMDB_API_KEY;
@@ -127,7 +139,7 @@ export async function getMediaWatchProviders(type: "movie" | "tv", id: number) {
       ? `https://api.themoviedb.org/3/${type}/${id}/watch/providers`
       : `https://api.themoviedb.org/3/${type}/${id}/watch/providers?api_key=${apiKey}`;
 
-    const res = await fetch(url, { next: { revalidate: 86400 } }); // Cache for 24 hours
+    const res = await fetch(url, { next: { revalidate: 86400 } });
     if (!res.ok) return null;
 
     const data = await res.json();
