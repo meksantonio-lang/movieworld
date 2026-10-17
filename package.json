@@ -9,10 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.95",
+    "@ai-sdk/react": "^4.0.142",
     "@next/third-parties": "^16.2.10",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.101.0",
+    "ai": "^7.0.139",
     "dotenv": "^17.4.2",
     "lucide-react": "^0.563.0",
     "next": "^15.1.6",

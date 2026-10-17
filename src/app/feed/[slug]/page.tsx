@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
@@ -15,6 +16,62 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
+// ==========================================
+// METADATA GENERATOR FOR SOCIAL MEDIA CARDS
+// ==========================================
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  // Await the params object (Required in Next.js 15)
+  const { slug } = await params;
+
+  // Fetch only the specific columns needed for the social media card
+  const { data: article } = await supabase
+    .from('news_feed')
+    .select('title, summary, image_url, cover_image')
+    .eq('slug', slug)
+    .single();
+
+  // Fallback in case the article gets deleted or the URL is invalid
+  if (!article) {
+    return {
+      title: "Article Not Found | MovieWrld",
+    };
+  }
+
+  const displayImage = article.cover_image || article.image_url || "https://moviewrld.com/Logo.png";
+  const fallbackSummary = article.summary || "Read the latest entertainment news on MovieWrld.";
+
+  // Construct the social media tags
+  return {
+    title: `${article.title} | MovieWrld`,
+    description: fallbackSummary,
+    openGraph: {
+      title: article.title,
+      description: fallbackSummary,
+      url: `https://moviewrld.com/feed/${slug}`,
+      siteName: "MovieWrld",
+      images: [
+        {
+          url: displayImage, 
+          width: 1200,
+          height: 630,
+          alt: article.title,
+        },
+      ],
+      locale: "en_US",
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description: fallbackSummary,
+      images: [displayImage],
+    },
+  };
+}
+
+// ==========================================
+// MAIN PAGE COMPONENT
+// ==========================================
 export default async function ArticlePage({ params }: PageProps) {
   // ✅ Await the dynamic parameters to satisfy Next.js 15 async requirements
   const resolvedParams = await params;

@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import "@/app/globals.css"; 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import { GoogleAnalytics } from '@next/third-parties/google';
+import AIChatWidget from '@/components/AIChatWidget';
 
 // This is what Google and Social Media bots read
 export const metadata: Metadata = {
@@ -69,8 +71,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* ✅ Impact Radius Site Verification */}
         <meta name="impact-site-verification" content="08143a11-f1e4-42eb-82c4-6c2900a73f67" />
 
-        {/* ✅ JSON-LD Organization Schema for Google */}
-        <script
+        {/* ✅ JSON-LD Organization Schema for Google (Converted to Next.js Script to fix hydration mismatch) */}
+        <Script
+          id="organization-schema"
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
@@ -91,6 +94,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         
         {/* ✅ Google Analytics 4 Integration */}
         <GoogleAnalytics gaId="G-JN707ZE07C" />
+        
+        {/* ✅ Floating AI Chat Widget */}
+        <AIChatWidget />
       </body>
     </html>
   );
