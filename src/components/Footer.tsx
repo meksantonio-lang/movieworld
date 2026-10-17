@@ -45,11 +45,11 @@ export default function Footer() {
                 </svg>
               </a>
               {/* Gmail Icon */}
-              <a href="moviewrld.com@gmail.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-purple-400 transition-transform hover:scale-110">
+              <a href="mailto:moviewrld.com@gmail.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-purple-400 transition-transform hover:scale-110">
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
               </a>
               {/* YouTube Icon */}
-              <a href="https://youtube.com/@yourchannel" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-purple-400 transition-transform hover:scale-110">
+              <a href="https://youtube.com/@maskedi1t" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-purple-400 transition-transform hover:scale-110">
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M21.582 6.186a2.506 2.506 0 00-1.766-1.777C18.257 4 12 4 12 4s-6.257 0-7.816.409A2.506 2.506 0 002.418 6.186C2 7.747 2 12 2 12s0 4.253.418 5.814a2.506 2.506 0 001.766 1.777C5.743 20 12 20 12 20s6.257 0 7.816-.409a2.506 2.506 0 001.766-1.777C22 16.253 22 12 22 12s0-4.253-.418-5.814zM9.999 15.595v-7.19l6.549 3.595-6.549 3.595z"/></svg>
               </a>
               {/* Telegram Icon */}
@@ -64,12 +64,22 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom Copyright */}
+        {/* Bottom Copyright and Legal Links */}
         <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-white/10 text-xs text-gray-500">
           <p>© {new Date().getFullYear()} Moviewrld. All rights reserved.</p>
-          <div className="flex gap-4 mt-4 md:mt-0">
-            <Link href="/terms" className="hover:text-gray-300">Terms of Service</Link>
-            <Link href="/privacy" className="hover:text-gray-300">Privacy Policy</Link>
+          <div className="flex items-center gap-4 mt-4 md:mt-0">
+            <Link href="/terms" className="hover:text-pink-400 transition-colors">Terms of Service</Link>
+            <span className="w-1 h-1 rounded-full bg-gray-700 hidden md:block"></span>
+            <Link href="/privacy" className="hover:text-pink-400 transition-colors">Privacy Policy</Link>
+            <span className="w-1 h-1 rounded-full bg-gray-700 hidden md:block"></span>
+            
+            {/* The New Contact Us Mailto Button */}
+            <a 
+              href="mailto:moviewrld.com@gmail.com" 
+              className="font-bold text-gray-400 hover:text-pink-400 transition-colors uppercase tracking-wider"
+            >
+              Contact Us
+            </a>
           </div>
         </div>
 
