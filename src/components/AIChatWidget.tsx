@@ -14,32 +14,32 @@ const TOOLTIP_MESSAGES = [
 const AVATARS = ["/ai-avatar-1.png", "/ai-avatar-2.png", "/ai-avatar-3.png"];
 const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
 const THIRTY_MINS_MS = 30 * 60 * 1000;
-const TOOLTIP_DISPLAY_TIME_MS = 90000; // 90 seconds total (30s per message)
+const TOOLTIP_DISPLAY_TIME_MS = 12000; // 12 seconds total (4s per message)
 
 export default function AIChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messageIndex, setMessageIndex] = useState(0);
   const [avatarIndex, setAvatarIndex] = useState(0);
-  const [showTooltip, setShowTooltip] = useState(true);
+  const [showTooltip, setShowTooltip] = useState(true); // Controls if the text bubble is visible
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // Cycle the tooltip messages every 20 seconds ONLY when the bubble is visible
+  // Cycle the tooltip messages every 4 seconds ONLY when the bubble is visible
   useEffect(() => {
     if (isOpen || !showTooltip) return;
     
     const interval = setInterval(() => {
       setMessageIndex((prev) => (prev + 1) % TOOLTIP_MESSAGES.length);
-    }, 20000);
+    }, 4000);
     
     return () => clearInterval(interval);
   }, [isOpen, showTooltip]);
 
   // Handle the 30-minute visibility timer
   useEffect(() => {
-    // Hide the initial popup after 90 seconds
+    // Hide the initial popup after 12 seconds (giving time to read all 3 messages)
     let hideTimeout = setTimeout(() => setShowTooltip(false), TOOLTIP_DISPLAY_TIME_MS);
 
-    // Every 30 minutes, pop back up for 90 seconds
+    // Every 30 minutes, pop back up for 12 seconds
     const showInterval = setInterval(() => {
       setShowTooltip(true);
       setMessageIndex(0); // Reset to the first greeting
@@ -64,14 +64,12 @@ export default function AIChatWidget() {
     return () => clearInterval(interval);
   }, []);
 
-  // Trigger a subtle bounce animation every 60 seconds
+  // Trigger a bounce animation every 90 seconds
   useEffect(() => {
     const animInterval = setInterval(() => {
       setIsAnimating(true);
-      // Remove the animation class after 3 seconds
-      setTimeout(() => setIsAnimating(false), 3000);
-    }, 60000);
-
+      setTimeout(() => setIsAnimating(false), 3000); // Remove bounce after 3 seconds
+    }, 90000);
     return () => clearInterval(animInterval);
   }, []);
 
@@ -120,6 +118,7 @@ export default function AIChatWidget() {
                 <div className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm ${
                   m.role === "user" ? "bg-pink-600 text-white" : "bg-gray-800 text-gray-200"
                 }`}>
+                  {/* Using your exact parts.map rendering logic */}
                   {m.parts?.map((part, index) => part.type === "text" && (
                     <span key={`${m.id}-${index}`} className="whitespace-pre-wrap">{part.text}</span>
                   ))}
@@ -163,7 +162,7 @@ export default function AIChatWidget() {
 
       {/* --- THE FLOATING BUTTON & TOOLTIPS --- */}
       <div className="flex items-center gap-3">
-        {/* The Cycling Tooltip */}
+        {/* The Cycling Tooltip (Now respects the showTooltip state) */}
         {!isOpen && showTooltip && (
           <div className="bg-purple-900 text-white text-xs sm:text-sm font-medium px-4 py-2 rounded-2xl shadow-lg border border-purple-700 animate-in fade-in zoom-in duration-300">
             {TOOLTIP_MESSAGES[messageIndex]}
