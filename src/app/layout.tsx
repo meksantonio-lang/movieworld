@@ -6,11 +6,12 @@ import Footer from "@/components/Footer";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import AIChatWidget from '@/components/AIChatWidget';
+import { Analytics } from "@vercel/analytics/next";
 
 // This is what Google and Social Media bots read
 export const metadata: Metadata = {
   metadataBase: new URL("https://moviewrld.com"),
-  title: "MovieWrld 🌍 | Ratings, Reviews, Trailers & News",
+  title: "MovieWrld 🌍 | Ratings, Reviews, Watchlist, Watch movies, Trailers & News",
   description:
     "Your ultimate hub for trending movies, anime, and K-dramas. Watch official trailers, join the community of movie lovers and read the latest Hollywood and anime news, drop reviews, explore cast details, and get movie recommendations based on your mood and preferences.",
   keywords: [
@@ -97,6 +98,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         
         {/* ✅ Floating AI Chat Widget */}
         <AIChatWidget />
+
+        {/* ✅ Vercel Web Analytics */}
+        <Analytics />
       </body>
     </html>
   );

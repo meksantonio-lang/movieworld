@@ -7,8 +7,8 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: [
         '/chisom/',     // Secures your specific admin portal and dashboard
-        '/api/',        // Prevents crawlers from hitting your backend data endpoints
-        '/_next/',      // Standard Next.js internal build files
+        '/api/',        // Prevents crawlers from hitting your backend AI/data endpoints
+        // Removed /_next/ so crawlers can access your JS/CSS and render the page
       ],
     },
     sitemap: 'https://moviewrld.com/sitemap.xml',
