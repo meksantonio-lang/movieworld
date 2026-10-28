@@ -189,9 +189,15 @@ export default async function MediaPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* 🎬 WHERE TO WATCH (SMART AMAZON AFFILIATE SEARCH) */}
+        {/* 🎬 WHERE TO WATCH (TMDB FREE STREAMING + AMAZON AFFILIATE) */}
         <div className="mt-16">
-          <WhereToWatch movieTitle={title} releaseYear={year} topActor={leadActor} />
+          <WhereToWatch 
+            id={mediaId} 
+            mediaType={tmdbType}
+            movieTitle={title} 
+            releaseYear={year} 
+            topActor={leadActor} 
+          />
         </div>
 
         {/* ⭐ MOVIEWRLD CRITIC REVIEW */}
