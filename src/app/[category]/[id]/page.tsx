@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import LikeButton from "@/components/LikeButton";
 import CommentSection from "@/components/CommentSection";
 import WhereToWatch from "@/components/WhereToWatch";
+import RelatedScoops from "@/components/RelatedScoops";
 
 export const dynamic = "force-dynamic";
 
@@ -284,6 +285,7 @@ export default async function MediaPage({ params }: PageProps) {
 
         {/* COMMUNITY REVIEW SECTION */}
         <div className="mt-24">
+          <RelatedScoops mediaId={mediaId} />
            <CommentSection mediaId={mediaId} />
         </div>
 

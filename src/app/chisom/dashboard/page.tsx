@@ -46,6 +46,7 @@ export default function AdminDashboard() {
   const [newsSummary, setNewsSummary] = useState("");
   const [newsContent, setNewsContent] = useState("");
   const [newsCategory, setNewsCategory] = useState("Hollywood");
+  const [relatedMediaIds, setRelatedMediaIds] = useState(""); // NEW STATE FOR RELATED MEDIA
   const [isPublishingNews, setIsPublishingNews] = useState(false);
   const [newsMessage, setNewsMessage] = useState("");
   
@@ -184,6 +185,12 @@ export default function AdminDashboard() {
       finalImageUrl = publicUrlData.publicUrl;
     }
 
+    // Convert comma-separated string into an array of integers (e.g. "1429, 85937" -> [1429, 85937])
+    const parsedMediaIds = relatedMediaIds
+      .split(",")
+      .map((id) => parseInt(id.trim(), 10))
+      .filter((id) => !isNaN(id));
+
     const slug = newsTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Math.random().toString(36).substring(2, 7);
 
     const { error } = await supabase.from("news_feed").insert({
@@ -195,7 +202,8 @@ export default function AdminDashboard() {
       image_url: finalImageUrl, 
       cover_image: finalImageUrl, 
       source_type: 'Manual',
-      published_at: new Date().toISOString()
+      published_at: new Date().toISOString(),
+      related_media_ids: parsedMediaIds // PUSHING THE ARRAY TO SUPABASE
     });
 
     if (error) {
@@ -205,6 +213,7 @@ export default function AdminDashboard() {
       setNewsTitle("");
       setNewsSummary("");
       setNewsContent("");
+      setRelatedMediaIds(""); // Resetting the new field
       setCoverImageFile(null);
       setImagePreview("");
       fetchNewsItems(); 
@@ -443,6 +452,20 @@ export default function AdminDashboard() {
                       <option value="Gaming">Gaming</option>
                     </select>
                   </div>
+                </div>
+
+                {/* 🔥 NEW RELATED MEDIA IDs FIELD */}
+                <div>
+                  <label className="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Related TMDB IDs (Optional)</label>
+                  <input 
+                    type="text" 
+                    value={relatedMediaIds} 
+                    onChange={(e) => setRelatedMediaIds(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }} 
+                    className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg border border-gray-800 focus:border-pink-500 focus:outline-none transition-colors" 
+                    placeholder="e.g. 1429, 85937" 
+                  />
+                  <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">Comma-separated movie/anime IDs to link this scoop to their pages</p>
                 </div>
 
                 <div>
