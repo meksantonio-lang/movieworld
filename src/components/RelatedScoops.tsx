@@ -6,10 +6,10 @@ interface RelatedScoopsProps {
 }
 
 export default async function RelatedScoops({ mediaId }: RelatedScoopsProps) {
-  // Queries the news_feed where the array of related_media_ids contains the current page's mediaId
+  // 1. Added 'slug' and 'cover_image' to the select query to match your feed structure
   const { data: scoops, error } = await supabase
     .from("news_feed")
-    .select("id, title, image_url, created_at") // Adjust these column names if your database uses different ones
+    .select("id, slug, title, image_url, cover_image, created_at") 
     .contains("related_media_ids", [mediaId])
     .order("created_at", { ascending: false })
     .limit(3);
@@ -29,35 +29,40 @@ export default async function RelatedScoops({ mediaId }: RelatedScoopsProps) {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {scoops.map((scoop) => (
-          <Link 
-            key={scoop.id} 
-            href={`/news/${scoop.id}`} // Adjust this path if your news articles are routed differently
-            className="group block bg-gray-900 rounded-2xl overflow-hidden border border-white/5 hover:border-purple-500/50 transition-all shadow-lg hover:shadow-purple-900/20"
-          >
-            <div className="aspect-video w-full overflow-hidden bg-gray-800">
-              {scoop.image_url ? (
-                <img 
-                  src={scoop.image_url} 
-                  alt={scoop.title} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-600 font-bold uppercase tracking-widest text-xs">
-                  Moviewrld Scoop
-                </div>
-              )}
-            </div>
-            <div className="p-5">
-              <span className="text-[10px] font-bold text-pink-400 uppercase tracking-widest mb-2 block">
-                {new Date(scoop.created_at).toLocaleDateString()}
-              </span>
-              <h4 className="text-white font-bold leading-snug group-hover:text-purple-400 transition-colors line-clamp-2">
-                {scoop.title}
-              </h4>
-            </div>
-          </Link>
-        ))}
+        {scoops.map((scoop) => {
+          // Use cover_image if available, just like your article page does
+          const displayImage = scoop.cover_image || scoop.image_url;
+          
+          return (
+            <Link 
+              key={scoop.id} 
+              href={`/feed/${scoop.slug}`} 
+              className="group block bg-gray-900 rounded-2xl overflow-hidden border border-white/5 hover:border-purple-500/50 transition-all shadow-lg hover:shadow-purple-900/20"
+            >
+              <div className="aspect-video w-full overflow-hidden bg-gray-800">
+                {displayImage ? (
+                  <img 
+                    src={displayImage} 
+                    alt={scoop.title} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-600 font-bold uppercase tracking-widest text-xs">
+                    Moviewrld Scoop
+                  </div>
+                )}
+              </div>
+              <div className="p-5">
+                <span className="text-[10px] font-bold text-pink-400 uppercase tracking-widest mb-2 block">
+                  {new Date(scoop.created_at).toLocaleDateString()}
+                </span>
+                <h4 className="text-white font-bold leading-snug group-hover:text-purple-400 transition-colors line-clamp-2">
+                  {scoop.title}
+                </h4>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
