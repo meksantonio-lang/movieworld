@@ -6,6 +6,7 @@ import LikeButton from "@/components/LikeButton";
 import CommentSection from "@/components/CommentSection";
 import WhereToWatch from "@/components/WhereToWatch";
 import RelatedScoops from "@/components/RelatedScoops";
+import AdBanner from "@/components/AdBanner"; // ✅ ADDED ADBANNER IMPORT
 
 export const dynamic = "force-dynamic";
 
@@ -203,46 +204,54 @@ export default async function MediaPage({ params }: PageProps) {
 
         {/* ⭐ MOVIEWRLD CRITIC REVIEW */}
         {adminReview && (
-          <div className="mt-16 bg-gradient-to-br from-purple-900/30 via-gray-900 to-gray-900 border border-purple-500/30 rounded-2xl p-6 md:p-8 shadow-xl">
+          <div className="mt-16">
             
-            {/* 🤖 GOOGLE REVIEW SCHEMA INJECTION */}
-            <script
-              type="application/ld+json"
-              dangerouslySetInnerHTML={{
-                __html: JSON.stringify({
-                  "@context": "https://schema.org",
-                  "@type": "Review",
-                  "itemReviewed": {
-                    "@type": tmdbType === "movie" ? "Movie" : "TVSeries",
-                    "name": title
-                  },
-                  "author": {
-                    "@type": "Organization",
-                    "name": "Moviewrld"
-                  },
-                  "reviewBody": adminReview,
-                  "publisher": {
-                    "@type": "Organization",
-                    "name": "Moviewrld"
-                  }
-                })
-              }}
-            />
-
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-2xl">🌍</span>
-              <h3 className="text-xl md:text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 uppercase">
-                Moviewrld Review
-              </h3>
+            {/* ✅ CONDITIONAL ADSENSE BANNER */}
+            <div className="mb-8">
+               <AdBanner adSlot="YOUR_SLOT_ID" />
             </div>
-            
-            <p className="text-gray-200 text-lg not-italic font-medium leading-relaxed whitespace-pre-wrap">
-              {adminReview}
-            </p>
-            
-            <p className="text-purple-400 text-xs font-bold uppercase tracking-widest mt-4 text-right">
-              — Official Editorial
-            </p>
+
+            <div className="bg-gradient-to-br from-purple-900/30 via-gray-900 to-gray-900 border border-purple-500/30 rounded-2xl p-6 md:p-8 shadow-xl">
+              
+              {/* 🤖 GOOGLE REVIEW SCHEMA INJECTION */}
+              <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                  __html: JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "Review",
+                    "itemReviewed": {
+                      "@type": tmdbType === "movie" ? "Movie" : "TVSeries",
+                      "name": title
+                    },
+                    "author": {
+                      "@type": "Organization",
+                      "name": "Moviewrld"
+                    },
+                    "reviewBody": adminReview,
+                    "publisher": {
+                      "@type": "Organization",
+                      "name": "Moviewrld"
+                    }
+                  })
+                }}
+              />
+
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-2xl">🌍</span>
+                <h3 className="text-xl md:text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 uppercase">
+                  Moviewrld Review
+                </h3>
+              </div>
+              
+              <p className="text-gray-200 text-lg not-italic font-medium leading-relaxed whitespace-pre-wrap">
+                {adminReview}
+              </p>
+              
+              <p className="text-purple-400 text-xs font-bold uppercase tracking-widest mt-4 text-right">
+                — Official Editorial
+              </p>
+            </div>
           </div>
         )}
 
@@ -286,7 +295,7 @@ export default async function MediaPage({ params }: PageProps) {
         {/* COMMUNITY REVIEW SECTION */}
         <div className="mt-24">
           <RelatedScoops mediaId={mediaId} />
-           <CommentSection mediaId={mediaId} />
+          <CommentSection mediaId={mediaId} />
         </div>
 
       </div>

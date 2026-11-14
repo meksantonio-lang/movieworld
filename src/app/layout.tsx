@@ -62,17 +62,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        {/* ✅ Google AdSense Verification Script */}
-        <script
+        {/* ✅ Google AdSense Verification Script (Optimized for Next.js) */}
+        <Script
+          id="google-adsense-script"
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1496050599454972"
           crossOrigin="anonymous"
+          strategy="afterInteractive"
         />
 
         {/* ✅ Impact Radius Site Verification */}
         <meta name="impact-site-verification" content="08143a11-f1e4-42eb-82c4-6c2900a73f67" />
 
-        {/* ✅ JSON-LD Organization Schema for Google (Converted to Next.js Script to fix hydration mismatch) */}
+        {/* ✅ JSON-LD Organization Schema for Google */}
         <Script
           id="organization-schema"
           type="application/ld+json"
