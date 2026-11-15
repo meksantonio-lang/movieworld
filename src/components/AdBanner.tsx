@@ -23,11 +23,12 @@ export default function AdBanner({
   }, []);
 
   return (
-    <div className="w-full flex justify-center my-8 overflow-hidden bg-gray-900/20 border border-white/5 rounded-xl p-2 min-h-[100px]">
+    // Removed the background, border, and min-height so it is invisible when empty
+    <div className="w-full flex justify-center overflow-hidden">
       <ins
         className="adsbygoogle"
         style={{ display: "block", width: "100%" }}
-        data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" // REPLACE WITH YOUR ID ONCE APPROVED
+        data-ad-client="ca-pub-1496050599454972" 
         data-ad-slot={adSlot}
         data-ad-format={adFormat}
         data-full-width-responsive={fullWidthResponsive.toString()}
